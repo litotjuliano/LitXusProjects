@@ -25,14 +25,15 @@ Size target: **MEDIUM** — realistic enough to exercise reports, pagination, an
 
 | User | Role | Purpose |
 |---|---|---|
-| admin@litxus.demo | Admin | full access, used for approvals |
-| accountant@litxus.demo | Accountant | GL entry + reports testing |
-| sales@litxus.demo | SalesUser | invoice/customer testing |
-| inventory@litxus.demo | InventoryManager | stock movement testing |
-| manager@litxus.demo | Manager | read-only reports testing |
-| viewer@litxus.demo | Viewer | negative-permission testing (verify 403s) |
+| superadmin@litxus.demo | Super Admin | install owner — full access including License + FeatureFlags |
+| admin@litxus.demo | Admin | full business access, used for approvals |
+| accountant@litxus.demo | Accountant | GL entry + reports testing *(not yet seeded — planned)* |
+| sales@litxus.demo | SalesUser | invoice/customer testing *(not yet seeded — Phase 2)* |
+| inventory@litxus.demo | InventoryManager | stock movement testing *(not yet seeded — Phase 3)* |
+| manager@litxus.demo | Manager | read-only reports testing *(not yet seeded — planned)* |
+| viewer@litxus.demo | Viewer | negative-permission testing, verify 403s *(not yet seeded — planned)* |
 
-All seeded with password `Demo@12345` (Development/Demo environments only — never seeded in Production).
+All seeded with password `Demo@12345` (Development/Demo environments only — never seeded in Production). `superadmin@litxus.demo` and `admin@litxus.demo` are implemented and verified (`UserSeeder`, [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.4); the remaining four are documented here as the target state but not yet built.
 
 ## 8.3 Realistic Malaysia Context
 
@@ -52,11 +53,12 @@ Seed data deliberately includes:
 - One customer at/over their credit limit (tests credit-limit warning on new invoice)
 - One bank statement line with no matching GL entry (tests unreconciled-item report)
 
-## 8.5 How Seeding Works
+## 8.5 How Seeding Works (as actually built)
 
-- Per-module seeder classes (`Phase1AccountingSeeder`, `Phase2SalesSeeder`, `Phase3InventorySeeder`) implementing a shared `ISeeder` interface, run in dependency order by an `IHostedService` at startup.
+- `ISeeder` interface (`Order` + `SeedAsync`), implemented today by `RbacSeeder` (Order 1 — Permissions catalog from code, 7 roles, role→permission grants), `LicenseSeeder` (Order 2 — one local/demo Accounting Pro license), `UserSeeder` (Order 3 — `superadmin@litxus.demo` + `admin@litxus.demo`, via `UserManager<AppUser>` so passwords are hashed correctly, not inserted directly). Run in `Order` by `SeedDatabaseHostedService` on startup. The originally-planned per-module demo-data seeders (`Phase1AccountingSeeder` populating 30-40 CoA accounts + 100+ GL entries per §8.1) are **not yet built** — today's seeding only covers RBAC/license/the two admin-tier users, enough to log in and use the app, not enough demo transaction volume for report/pagination testing yet.
 - Gated by `appsettings.{Environment}.json` → `"Seeding": { "Enabled": true }` — **on** for Local and Demo environments, **off** by default in Production (a production install should never silently get demo data; if a customer wants sample data for training purposes, it's a deliberate, documented admin action).
-- Idempotent: each seeder checks `if (await _context.Accounts.AnyAsync()) return;` before inserting, so re-running the app doesn't duplicate seed rows.
+- Idempotent: each seeder checks its own table is empty before inserting (`RbacSeeder` checks `Permissions`, `LicenseSeeder` checks `Licenses`, `UserSeeder` checks `AspNetUsers` via `UserManager.Users`), so re-running the app doesn't duplicate seed rows.
+- **Verified**: fresh SQL Server container → migration → API startup → both `superadmin@litxus.demo` and `admin@litxus.demo` log in with the correct roles/permissions/enabledModules, and `admin@litxus.demo` successfully creates a GL account through the full RBAC-gated endpoint.
 - Raw SQL scripts (`/docs/sample-data/*.sql`) are also generated from the seeders (via a `dotnet run --seed-export` utility) at the end of each phase, for cases where a customer wants to load sample data into a fresh DB without running the full app seeding pipeline (e.g. for a sales demo environment provisioned independently).
 
 ## 8.6 Performance Testing Data

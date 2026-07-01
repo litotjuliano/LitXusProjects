@@ -2,12 +2,14 @@ using LitXus.Application.Common.Interfaces;
 using LitXus.Infrastructure.Identity;
 using LitXus.Infrastructure.Persistence;
 using LitXus.Infrastructure.Persistence.Interceptors;
+using LitXus.Infrastructure.Seeding;
 using LitXus.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace LitXus.Infrastructure;
 
@@ -43,6 +45,11 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IdentityService>();
+
+        services.AddScoped<ISeeder, RbacSeeder>();
+        services.AddScoped<ISeeder, LicenseSeeder>();
+        services.AddScoped<ISeeder, UserSeeder>();
+        services.AddHostedService<SeedDatabaseHostedService>();
 
         return services;
     }

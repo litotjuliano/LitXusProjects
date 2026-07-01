@@ -15,12 +15,15 @@ Format: `{Module}.{Entity}.{Operation}` — e.g. `Accounting.GLEntry.Create`, `S
 
 | Role | Accounting | Sales | Inventory | Admin |
 |---|---|---|---|---|
-| Admin | Create/Read/Update/Delete/Approve | same | same | full |
+| Super Admin | Create/Read/Update/Delete/Approve | same | same | full, including License + FeatureFlags |
+| Admin | Create/Read/Update/Delete/Approve | same | same | full except License management |
 | Accountant | Create/Read/Update/Approve GL, Read reports | Read only | Read only | none |
 | SalesUser | none | Create/Read/Update Invoices, no Approve | Read only (stock check) | none |
 | InventoryManager | none | Read only | Create/Read/Update/Delete Stock | none |
 | Manager | Read reports (all modules) | Read reports | Read reports | Read audit logs |
 | Viewer | Read only, all modules | Read only | Read only | none |
+
+**Super Admin vs. Admin** was added during Phase 1 implementation (not in the original 6-role plan): Super Admin is the install owner — the only role that can view/rotate the license key or toggle feature flags (`Admin.License.*`, `Admin.FeatureFlags.*`). Admin is a full business administrator with everything else. In a single-install product this distinction mostly matters for larger customers who want to separate "who runs the business" from "who can change what the software is licensed to do." Seeded automatically — see [08_Sample_Data.md](08_Sample_Data.md) §8.2.
 
 ## 6.3 JWT Token Structure & Lifecycle
 
