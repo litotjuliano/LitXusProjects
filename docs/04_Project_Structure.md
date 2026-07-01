@@ -15,17 +15,15 @@ LitXus-Systems/
 │   │   └── LitXus.IntegrationTests/
 │   ├── LitXus.sln
 │   └── Directory.Build.props
-├── frontend/
+├── frontend/                            # Konrix Envato template (used as-is) + LitXus pages
 │   ├── src/
-│   │   ├── modules/
-│   │   │   ├── accounting/
-│   │   │   ├── sales/
-│   │   │   ├── inventory/
-│   │   │   └── admin/
-│   │   ├── shared/                     # ui components, hooks, api client
-│   │   ├── stores/                     # Zustand stores
+│   │   ├── pages/{auth,accounting,admin,apps,ui,...}/   # accounting/ + admin/ are LitXus's own
+│   │   ├── components/                 # template's shared UI kit (VerticalForm, Modal, etc.)
+│   │   ├── helpers/api/                # apiCore, auth.ts, accounting.ts
+│   │   ├── redux/{auth,layout}/, store.ts
+│   │   ├── constants/menu.ts
 │   │   ├── routes/
-│   │   └── main.tsx
+│   │   └── index.tsx / App.tsx
 │   ├── public/
 │   ├── vite.config.ts
 │   └── package.json
@@ -90,35 +88,50 @@ LitXus.Api/
 
 ## 4.3 Frontend Project Structure (detail)
 
+The frontend is **not** built from a bare Vite scaffold — it is the [Konrix](https://coderthemes.com) Envato React/Tailwind admin template, used as-is per the locked spec, with LitXus's own pages/API wiring layered on top of the template's existing layout, auth, and Redux plumbing. Source: `/Users/litojuliano/LitXus Documentations/Konrix_React/Admin`, copied into `frontend/` and customized (see [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.5 for the exact diff).
+
 ```
 frontend/src/
-  modules/accounting/
-    pages/{ChartOfAccountsPage,GLEntriesPage,TrialBalancePage,BankReconciliationPage}.tsx
-    components/{GLEntryForm,AccountPicker,ReconciliationTable}.tsx
-    api/accountingApi.ts        # axios calls, typed
-    store/accountingStore.ts    # Zustand slice
-  modules/sales/
-    pages/{CustomersPage,InvoicesPage,InvoiceDetailPage,PaymentsPage}.tsx
-    components/{InvoiceForm,InvoiceLineEditor,PaymentModal}.tsx
-    api/salesApi.ts
-    store/salesStore.ts
-  modules/inventory/  (same pattern)
-  modules/admin/
-    pages/{UsersPage,RolesPage,AuditLogsPage,FeatureFlagsPage}.tsx
-  shared/
-    components/{DataTable,Modal,ConfirmDialog,Toast,FormField,LoadingSpinner}.tsx
-    hooks/{useFeatureFlags,usePermission,usePagination}.ts
-    api/apiClient.ts            # axios instance, interceptors for JWT + 401 refresh
-    utils/{currency.ts (MYR formatting), date.ts (Day.js wrappers)}
-  stores/authStore.ts            # Zustand: user, tokens, roles, permissions, enabledModules
-  routes/{AppRoutes.tsx, ProtectedRoute.tsx, ModuleGuard.tsx}
-  main.tsx
+  pages/
+    auth/{Login,Register,RecoverPassword,LockScreen}.tsx      # template's own, wired to /auth/* endpoints
+    accounting/                                                 # LitXus Phase 1 pages (new)
+      Dashboard.tsx
+      ChartOfAccounts.tsx
+      GLEntries.tsx
+      BankReconciliation.tsx
+      reports/{TrialBalance,IncomeStatement,BalanceSheet,GeneralLedger}.tsx
+    admin/{Users,Roles,AuditLogs}.tsx                           # LitXus admin pages (new)
+    apps/, extra/, error/, ui/, extended/, forms/, tables/      # Konrix demo/showcase pages,
+                                                                 # left in place ("use as-is") but
+                                                                 # NOT linked from the LitXus nav —
+                                                                 # candidates for deletion in Phase 5 polish
+  components/                                                   # template's shared UI kit — VerticalForm,
+                                                                 # FormInput, AuthLayout, PageBreadcrumb,
+                                                                 # HeadlessUI/ModalLayout, etc. — reused as-is
+  helpers/api/
+    apiCore.ts               # axios wrapper, session storage, Bearer auth header (template had "JWT ", fixed)
+    auth.ts                  # login/logout/register/forgot-password — repointed to /auth/* per API spec
+    accounting.ts             # LitXus: accounts + GL entries calls (new, Phase 1)
+  redux/
+    auth/{actions,constants,reducers,saga}.ts   # template's auth slice — repointed from username to email,
+                                                 # response envelope adapted to { data: {...} } shape
+    layout/                   # template's own (sidebar collapse, theme, etc.) — untouched
+    store.ts
+  constants/menu.ts            # LitXus nav (Dashboard, Accounting, Administration) replacing the
+                                # template's demo-app menu; Sales/Inventory sections added in Phase 2/3
+  routes/{Routes,index,PrivateRoute}.tsx   # template's routing — accountingRoutes/adminRoutes added
+  layouts/{Vertical,Default,LeftSideBar,Topbar,Menu,Footer}.tsx  # template's shell, untouched
+  config.ts                    # fixed to read import.meta.env.VITE_API_URL (template had process.env,
+                                # a leftover from a CRA port that doesn't work under Vite)
+  index.tsx / App.tsx
 ```
+
+**What was changed vs. the stock template** (full list in [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.5): `config.ts` env var source, `apiCore.ts` auth header prefix (`JWT` → `Bearer`) and session key name, `helpers/api/auth.ts` endpoint paths and `username`→`email` field, `redux/auth/{actions,saga,reducers}.ts` field names and response envelope, `Login.tsx`/`Register.tsx`/`RecoverPassword.tsx` field names and removed social-login UI, `constants/menu.ts` full replacement, `index.html`/`PageBreadcrumb.tsx` branding, `package.json` name/build script (decoupled `tsc` from `vite build` — see §14.5 for why).
 
 ## 4.4 File Naming Conventions
 
 - **Backend:** PascalCase for files/classes matching the type name (`CreateInvoiceCommand.cs`). One public type per file.
-- **Frontend:** PascalCase for components (`InvoiceForm.tsx`), camelCase for hooks/utils (`useFeatureFlags.ts`), kebab-case for non-component assets.
+- **Frontend:** follows the Konrix template's existing conventions — PascalCase for pages/components (`GLEntries.tsx`), camelCase for helpers (`accounting.ts` exporting named functions, not a class), Redux slices per domain folder under `redux/`.
 - **Migrations:** `yyyyMMddHHmmss_PhaseN_Description` (EF Core default timestamp prefix retained).
 - **OpenSpec docs:** fixed filenames per phase folder (`Features.md`, `API_Specification.md`, etc.) so tooling/scripts can rely on the path shape.
 

@@ -109,7 +109,7 @@ Same pattern for `StockMovementRecordedEvent` → COGS GL posting. If a customer
      - Publishes InvoicePostedEvent
 4. (Enterprise Pro only) PostInvoiceToGLHandler creates balanced GLEntry
 5. Response DTO mapped via AutoMapper → 201 Created returned
-6. Frontend: toast success, invoice list re-fetched (React Query-style refetch via Zustand action)
+6. Frontend: SweetAlert2 success toast (template convention), invoice list re-fetched via a Redux-Saga-driven action creator (`fetchInvoices()` dispatched, saga calls the API, reducer updates `state.Sales.invoices`)
 ```
 
 ## 1.6 How Three Products Share One Codebase
@@ -119,7 +119,7 @@ Same pattern for `StockMovementRecordedEvent` → COGS GL posting. If a customer
 - **`IFeatureFlagService.IsEnabled(Module.Accounting)`** is checked at three points:
   1. API — `[RequireModule(Module.Accounting)]` action filter returns 403 if disabled.
   2. Application — command/query handlers short-circuit (defense in depth, not just UI-trust).
-  3. Frontend — route guards hide entire nav sections; `useFeatureFlags()` Zustand selector.
+  3. Frontend — route guards (`PrivateRoute` + a module check) hide entire nav sections; `state.Auth.user.enabledModules` read via a `useSelector` in the Redux store the Konrix template already ships with.
 - Distribution: same installer/Docker image for all three products. What differs is the `appsettings.Production.json` → `Licensing:EnabledModules` value (or, longer-term, a signed license file). At install time, the customer's purchased product determines this config, not a different codebase.
 
 ## 1.7 Technology Integration Summary
@@ -130,6 +130,8 @@ Same pattern for `StockMovementRecordedEvent` → COGS GL posting. If a customer
 | ORM | EF Core 9 | Code-First, migrations per module folder |
 | Validation | FluentValidation | Validators auto-discovered, run as MediatR pipeline behavior before handler executes |
 | Mapping | AutoMapper | Entity ↔ DTO profiles per module |
-| Auth | ASP.NET Identity + JWT | Access token (short-lived) + refresh token (rotated, stored hashed) |
+| Auth | ASP.NET Identity + JWT | Access token (short-lived) + refresh token (rotated, stored hashed); frontend uses `Authorization: Bearer` (Konrix template default was `JWT` prefix — corrected to match ASP.NET Core's JwtBearer scheme) |
 | API docs | Swashbuckle (Swagger/OpenAPI 3.0) | Auto-generated from XML doc comments + DTOs |
 | Logging | Serilog | Console + rolling file sink locally; structured JSON sink for cloud/demo |
+| Frontend state | Redux Toolkit + Redux-Saga | Konrix template's own architecture — one slice per domain (`Auth`, `Layout`, and new `Accounting`/`Sales`/`Inventory` slices added per phase), sagas handle async API calls |
+| Frontend charts | ApexCharts (`react-apexcharts`) | Template's bundled charting library — used for Phase 5 dashboards/KPI widgets instead of Recharts |

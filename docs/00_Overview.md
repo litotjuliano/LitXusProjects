@@ -44,6 +44,6 @@ A single license row (`Licenses` table, see [02_Database_Schema.md](02_Database_
 
 **Backend:** .NET 9, C# 13, Clean Architecture (Presentation / Application / Domain / Infrastructure), EF Core 9, SQL Server 2019+, ASP.NET Core Identity + JWT, Serilog, MediatR, FluentValidation, AutoMapper, xUnit + Moq, Swagger/OpenAPI 3.0.
 
-**Frontend:** Vite, React 18, Zustand, Tailwind CSS, React Router v6, React Hook Form, Axios, Day.js, Recharts, Radix UI / Headless UI, ESLint + Prettier, Vitest.
+**Frontend:** [Konrix](https://coderthemes.com) Envato Tailwind admin template (Vite + React 18 + TypeScript, used as-is per the locked spec) — Redux Toolkit + Redux-Saga for state (the template's own architecture, not Zustand), Tailwind CSS v3 + FrostUI + Headless UI, React Router v6, React Hook Form + Yup, Axios + jwt-decode, Day.js, ApexCharts (the template's charting library, not Recharts), ESLint + Prettier, ships without a test runner (Vitest to be added in Phase 5 if unit-testing the custom LitXus pages becomes a priority). See [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.5 for how the template was integrated and where it diverges from the original React-18-generic stack description.
 
 **Repo:** GitHub monorepo — `/backend`, `/frontend`, `/docs`. Branches: `main` (prod), `develop` (integration), `feature/*`.
