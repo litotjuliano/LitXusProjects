@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LitXus.Api/LitXus.Api.csproj" />
+    <Project Path="src/LitXus.Application/LitXus.Application.csproj" />
+    <Project Path="src/LitXus.Domain/LitXus.Domain.csproj" />
+    <Project Path="src/LitXus.Infrastructure/LitXus.Infrastructure.csproj" />
+    <Project Path="tests/LitXus.IntegrationTests/LitXus.IntegrationTests.csproj" />
+    <Project Path="tests/LitXus.UnitTests/LitXus.UnitTests.csproj" />
+  </Folder>
+</Solution>

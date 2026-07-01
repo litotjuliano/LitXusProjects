@@ -2,7 +2,7 @@
 
 ## 10.1 Development Environment (Local)
 
-**Prerequisites:** .NET 9 SDK, Node.js 18+, SQL Server LocalDB (or full SQL Server Developer Edition), Docker Desktop (optional, for Testcontainers-based integration tests).
+**Prerequisites:** .NET 10 SDK, Node.js 18+, SQL Server LocalDB (or full SQL Server Developer Edition), Docker Desktop (optional, for Testcontainers-based integration tests).
 
 **Setup steps:**
 ```bash

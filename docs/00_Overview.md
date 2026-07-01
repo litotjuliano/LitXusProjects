@@ -36,13 +36,13 @@ A single license row (`Licenses` table, see [02_Database_Schema.md](02_Database_
 | 11 | [OpenSpec Template](11_OpenSpec_Template.md) | Reusable per-phase spec template + one worked example |
 | 12 | [Documentation Templates](12_Documentation_Templates.md) | User/dev/deployment guide skeletons |
 | 13 | [Implementation Roadmap](13_Roadmap.md) | Week-by-week timeline, critical path, risk register |
-| 14 | [Technology Implementation](14_Tech_Implementation.md) | .NET 9 + React setup specifics, MediatR, EF Core, JWT, Swagger |
+| 14 | [Technology Implementation](14_Tech_Implementation.md) | .NET 10 + React setup specifics, MediatR, EF Core, JWT, Swagger |
 | 15 | [Malaysia Compliance](15_Malaysia_Compliance.md) | SST, MyInvois, PDPA, Companies Act 2016 |
 | 16 | [Feature Flags & Packaging](16_Feature_Flags.md) | Flag mechanism, licensing logic, product config examples |
 
 ## Locked Technology Stack
 
-**Backend:** .NET 9, C# 13, Clean Architecture (Presentation / Application / Domain / Infrastructure), EF Core 9, SQL Server 2019+, ASP.NET Core Identity + JWT, Serilog, MediatR, FluentValidation, AutoMapper, xUnit + Moq, Swagger/OpenAPI 3.0.
+**Backend:** .NET 10 (LTS — upgraded from the originally-locked .NET 9 once .NET 10 shipped as LTS in Nov 2025; see [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.1), C# 14, Clean Architecture (Presentation / Application / Domain / Infrastructure), EF Core 10, SQL Server 2019+, ASP.NET Core Identity + JWT, Serilog, MediatR (pinned to the last pre-commercial-license release), FluentValidation, xUnit + Moq/FluentAssertions, Swagger/OpenAPI 3.0. **No AutoMapper** — dropped after v13+ requires a commercial license and the free v12.x line has an unpatched DoS vulnerability (CVE-2026-32933); Entity↔DTO mapping is hand-written via extension methods instead (see [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.2a).
 
 **Frontend:** [Konrix](https://coderthemes.com) Envato Tailwind admin template (Vite + React 18 + TypeScript, used as-is per the locked spec) — Redux Toolkit + Redux-Saga for state (the template's own architecture, not Zustand), Tailwind CSS v3 + FrostUI + Headless UI, React Router v6, React Hook Form + Yup, Axios + jwt-decode, Day.js, ApexCharts (the template's charting library, not Recharts), ESLint + Prettier, ships without a test runner (Vitest to be added in Phase 5 if unit-testing the custom LitXus pages becomes a priority). See [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.5 for how the template was integrated and where it diverges from the original React-18-generic stack description.
 

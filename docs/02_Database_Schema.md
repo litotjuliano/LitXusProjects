@@ -24,8 +24,9 @@ Roles (custom, separate from AspNetRoles — see 06_RBAC_Auth.md for why both ex
 Permissions
   Id                uniqueidentifier PK
   Module            nvarchar(50)      not null   -- Accounting | Sales | Inventory | Admin
+  Entity            nvarchar(50)      not null   -- GLEntry | Account | Invoice | Users | ...
   Operation         nvarchar(50)      not null   -- Create | Read | Update | Delete | Approve | Export
-  Code              nvarchar(100)     not null unique  -- e.g. "Accounting.GLEntry.Create"
+  Code              nvarchar(150)     not null unique  -- {Module}.{Entity}.{Operation}, e.g. "Accounting.GLEntry.Create"
 
 RolePermissions
   RoleId            uniqueidentifier FK -> Roles.Id

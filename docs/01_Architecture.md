@@ -18,7 +18,7 @@
                               ┌────────────▼─────────────┐
                               │    Application Layer      │
                               │  Handlers, DTOs, Validators│
-                              │  (FluentValidation, AutoMapper)│
+                              │  (FluentValidation, hand-mapped DTOs)│
                               └────────────┬─────────────┘
                                            │
                               ┌────────────▼─────────────┐
@@ -47,7 +47,7 @@ Single deployable backend, single deployable frontend bundle. No message queue, 
 | Layer | Project | Responsibility | Depends On |
 |---|---|---|---|
 | Presentation | `LitXus.Api` | Controllers, request/response models, auth middleware, Swagger config, global exception handler | Application |
-| Application | `LitXus.Application` | MediatR commands/queries + handlers, DTOs, FluentValidation validators, AutoMapper profiles, `IFeatureFlagService`, `ICurrentUserService` | Domain |
+| Application | `LitXus.Application` | MediatR commands/queries + handlers, DTOs with hand-written `ToDto()` mapping extensions, FluentValidation validators, `IFeatureFlagService`, `ICurrentUserService` | Domain |
 | Domain | `LitXus.Domain` | Entities (GLEntry, Invoice, Product...), enums, domain exceptions, business-rule methods on entities (e.g. `Invoice.CanBeVoided()`) | Nothing (no NuGet deps beyond BCL) |
 | Infrastructure | `LitXus.Infrastructure` | `AppDbContext` (EF Core), repository implementations, Identity setup, audit interceptor, Serilog sinks, external integrations (e.g. future MyInvois API client) | Application (implements its interfaces), Domain |
 
@@ -108,7 +108,7 @@ Same pattern for `StockMovementRecordedEvent` → COGS GL posting. If a customer
      - SaveChanges → AuditInterceptor captures before/after → AuditLog row written
      - Publishes InvoicePostedEvent
 4. (Enterprise Pro only) PostInvoiceToGLHandler creates balanced GLEntry
-5. Response DTO mapped via AutoMapper → 201 Created returned
+5. Response mapped to a DTO via the entity's `ToDto()` extension method → 201 Created returned
 6. Frontend: SweetAlert2 success toast (template convention), invoice list re-fetched via a Redux-Saga-driven action creator (`fetchInvoices()` dispatched, saga calls the API, reducer updates `state.Sales.invoices`)
 ```
 
@@ -127,9 +127,9 @@ Same pattern for `StockMovementRecordedEvent` → COGS GL posting. If a customer
 | Concern | Technology | Notes |
 |---|---|---|
 | CQRS | MediatR | One handler per command/query; pipeline behaviors for validation, logging, transaction wrapping |
-| ORM | EF Core 9 | Code-First, migrations per module folder |
+| ORM | EF Core 10 | Code-First, migrations per module folder |
 | Validation | FluentValidation | Validators auto-discovered, run as MediatR pipeline behavior before handler executes |
-| Mapping | AutoMapper | Entity ↔ DTO profiles per module |
+| Mapping | Hand-written `ToDto()` extensions | No AutoMapper — dropped for licensing + an unpatched CVE, see [00_Overview.md](00_Overview.md) |
 | Auth | ASP.NET Identity + JWT | Access token (short-lived) + refresh token (rotated, stored hashed); frontend uses `Authorization: Bearer` (Konrix template default was `JWT` prefix — corrected to match ASP.NET Core's JwtBearer scheme) |
 | API docs | Swashbuckle (Swagger/OpenAPI 3.0) | Auto-generated from XML doc comments + DTOs |
 | Logging | Serilog | Console + rolling file sink locally; structured JSON sink for cloud/demo |
