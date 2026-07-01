@@ -18,19 +18,6 @@ interface UserData {
   password: string;
 }
 
-/* bottom links */
-const BottomLink = () => {
-  return (
-    <p className="text-gray-500 dark:text-gray-400 text-center">Don't have an account ?
-      <Link to="/auth/register" className="text-primary ms-1">
-        <b>
-          Register
-        </b>
-      </Link>
-    </p>
-  );
-};
-
 const Login = () => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -76,7 +63,6 @@ const Login = () => {
       <AuthLayout
         authTitle="Sign In"
         helpText="Enter your email address and password to access admin panel."
-        bottomLinks={<BottomLink />}
       >
         <VerticalForm<UserData>
           onSubmit={onSubmit}

@@ -1,9 +1,5 @@
 import { Link } from "react-router-dom";
 
-// images
-import logoLight from '../assets/images/logo-light.png';
-import logoDark from '../assets/images/logo-dark.png';
-
 //component
 
 interface AccountLayoutProps {
@@ -50,28 +46,28 @@ const AuthLayout = ({
                 {userImage ? (
                   <div className="flex justify-between">
                     <div className="flex flex-col gap-4 mb-6">
-                      <Link to="/" className="block">
-                        <img className="h-6 block dark:hidden" src={logoDark} />
-                        <img className="h-6 hidden dark:block" src={logoLight} />
+                      <Link to="/" className="block text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        LitXus <span className="font-normal text-slate-500 dark:text-slate-400">Systems</span>
                       </Link>
                       <h4 className="text-slate-900 dark:text-slate-200/50 font-semibold">Hi ! Adam </h4>
                     </div>
                     <img src={userImage} alt="user-image" className="h-16 w-16 rounded-full shadow" />
                   </div>
                 ) : (
-                  <Link to="/" className="block mb-8">
-                    <img className="h-6 block dark:hidden" src={logoDark} alt="" />
-                    <img className="h-6 hidden dark:block" src={logoLight} alt="" />
+                  <Link to="/" className="block mb-8 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    LitXus <span className="font-normal text-slate-500 dark:text-slate-400">Systems</span>
                   </Link>
                 )}
 
                 {children}
 
-                <div className="flex items-center my-6">
-                  <div className="flex-auto mt-px border-t border-dashed border-gray-200 dark:border-slate-700"></div>
-                  <div className="mx-4 text-secondary">Or</div>
-                  <div className="flex-auto mt-px border-t border-dashed border-gray-200 dark:border-slate-700"></div>
-                </div>
+                {(hasThirdPartyLogin || bottomLinks) &&
+                  <div className="flex items-center my-6">
+                    <div className="flex-auto mt-px border-t border-dashed border-gray-200 dark:border-slate-700"></div>
+                    <div className="mx-4 text-secondary">Or</div>
+                    <div className="flex-auto mt-px border-t border-dashed border-gray-200 dark:border-slate-700"></div>
+                  </div>
+                }
 
                 {hasThirdPartyLogin &&
                   <div className="flex gap-4 justify-center mb-6">

@@ -5,11 +5,6 @@ import { useViewPort } from "../hooks";
 import { changeLayoutTheme, changeSideBarType } from "../redux/actions";
 import { LayoutTheme, SideBarType } from "../constants/layout";
 
-//logo
-import logoLight from '../assets/images/logo-light.png'
-import logoDark from '../assets/images/logo-dark.png'
-import logoSm from '../assets/images/logo-sm.png'
-
 // avatar
 import avatar2 from '../assets/images/users/avatar-2.jpg'
 import avatar4 from '../assets/images/users/avatar-4.jpg'
@@ -210,14 +205,14 @@ const Topbar = () => {
         <Link to="/" className="logo-box">
 
           <div className="logo-light">
-            <img src={logoLight} className="logo-lg h-6" alt="Light logo" />
-            <img src={logoSm} className="logo-sm" alt="Small logo" />
+            <span className="logo-lg h-6 flex items-center text-lg font-bold tracking-tight text-white">LitXus</span>
+            <span className="logo-sm flex items-center text-lg font-bold text-white">LX</span>
           </div>
 
 
           <div className="logo-dark">
-            <img src={logoDark} className="logo-lg h-6" alt="Dark logo" />
-            <img src={logoSm} className="logo-sm" alt="Small logo" />
+            <span className="logo-lg h-6 flex items-center text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">LitXus</span>
+            <span className="logo-sm flex items-center text-lg font-bold text-slate-900 dark:text-slate-100">LX</span>
           </div>
         </Link>
 

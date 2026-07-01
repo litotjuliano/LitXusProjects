@@ -13,11 +13,6 @@ import { useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
 import { changeSideBarType } from "../redux/actions";
 
-// images
-import logoLight from '../assets/images/logo-light.png'
-import logoDark from '../assets/images/logo-dark.png'
-import logoSm from '../assets/images/logo-sm.png'
-
 /* Sidebar content */
 const SideBarContent = () => {
   return (
@@ -68,12 +63,12 @@ const LeftSideBar = ({ isCondensed, hideLogo }: LeftSideBarProps) => {
       <div className="app-menu">
         <Link to="/" className="logo-box">
           <div className="logo-light">
-            <img src={logoLight} className="logo-lg h-6" alt="Light logo" />
-            <img src={logoSm} className="logo-sm" alt="Small logo" />
+            <span className="logo-lg h-6 flex items-center text-lg font-bold tracking-tight text-white">LitXus</span>
+            <span className="logo-sm flex items-center text-lg font-bold text-white">LX</span>
           </div>
           <div className="logo-dark">
-            <img src={logoDark} className="logo-lg h-6" alt="Dark logo" />
-            <img src={logoSm} className="logo-sm" alt="Small logo" />
+            <span className="logo-lg h-6 flex items-center text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">LitXus</span>
+            <span className="logo-sm flex items-center text-lg font-bold text-slate-900 dark:text-slate-100">LX</span>
           </div>
         </Link>
 
