@@ -28,19 +28,28 @@ if ! docker info >/dev/null 2>&1; then
   until docker info >/dev/null 2>&1; do sleep 2; done
 fi
 
+wait_for_sql() {
+  echo "Waiting for SQL Server to accept connections..."
+  for i in $(seq 1 30); do
+    docker exec "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$SQL_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1 && return 0
+    sleep 2
+  done
+  echo "SQL Server did not become ready in time." >&2
+  exit 1
+}
+
 if [ -z "$(docker ps -aq -f name=^${SQL_CONTAINER}$)" ]; then
   echo "Creating SQL Server container ($SQL_CONTAINER)..."
   docker run -d --name "$SQL_CONTAINER" -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD="$SQL_PASSWORD" \
     -p ${SQL_PORT}:1433 mcr.microsoft.com/mssql/server:2022-latest >/dev/null
-  echo "Waiting for SQL Server to accept connections..."
-  for i in $(seq 1 30); do
-    docker exec "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$SQL_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1 && break
-    sleep 2
-  done
+  wait_for_sql
 elif [ -z "$(docker ps -q -f name=^${SQL_CONTAINER}$)" ]; then
   echo "Starting existing SQL Server container..."
   docker start "$SQL_CONTAINER" >/dev/null
-  sleep 5
+  # A restarted container needs the same readiness poll as a fresh one — SQL Server's own
+  # listener takes longer to come up than a fixed short sleep reliably covers, which was
+  # causing pre-login-handshake connection failures on the very first migration attempt.
+  wait_for_sql
 else
   echo "SQL Server container already running."
 fi
