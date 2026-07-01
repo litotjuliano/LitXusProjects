@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<ISeeder, RbacSeeder>();
         services.AddScoped<ISeeder, LicenseSeeder>();
         services.AddScoped<ISeeder, UserSeeder>();
+        services.AddScoped<ISeeder, AccountingDemoDataSeeder>();
         services.AddHostedService<SeedDatabaseHostedService>();
 
         return services;

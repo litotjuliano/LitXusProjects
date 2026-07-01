@@ -38,5 +38,30 @@ public class Account : BaseEntity, IAuditable
 
     public void ApplyCredit(decimal amount) => Balance += IsDebitNormal ? -amount : amount;
 
+    /// <summary>
+    /// Net balance from raw debit/credit totals, honoring this account's normal balance side —
+    /// used by reports that compute a point-in-time balance from GLEntryLines directly rather
+    /// than reading the (always-current) Balance field. Kept here, not duplicated in Application,
+    /// since which accounts are debit-normal vs. credit-normal is an accounting rule, not a
+    /// reporting concern.
+    /// </summary>
+    public decimal ComputeNetBalance(decimal totalDebit, decimal totalCredit) =>
+        IsDebitNormal ? totalDebit - totalCredit : totalCredit - totalDebit;
+
+    /// <summary>
+    /// Debit/credit columns for a two-column trial balance presentation: a normal-balance
+    /// account's net position shows on its own side; an abnormal (e.g. contra-account) balance
+    /// shows as a positive amount on the opposite side, rather than a negative number.
+    /// </summary>
+    public (decimal Debit, decimal Credit) GetTrialBalanceColumns(decimal totalDebit, decimal totalCredit)
+    {
+        var net = ComputeNetBalance(totalDebit, totalCredit);
+        if (IsDebitNormal)
+        {
+            return net >= 0 ? (net, 0m) : (0m, -net);
+        }
+        return net >= 0 ? (0m, net) : (-net, 0m);
+    }
+
     private bool IsDebitNormal => Type is AccountType.Asset or AccountType.Expense;
 }

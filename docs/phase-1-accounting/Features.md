@@ -97,11 +97,11 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 **User story:** As an Accountant or Manager, I want standard financial reports, so that I can review the company's financial position.
 
 **Acceptance criteria:**
-- [ ] Trial Balance (as-of date) — always sums to zero against valid data
-- [ ] Income Statement (date range)
-- [ ] Balance Sheet (as-of date)
-- [ ] General Ledger detail (per account, date range)
-- [ ] All reports exportable as PDF, Excel, CSV
+- [x] Trial Balance (as-of date) — computed from Posted GLEntryLines up to the date, not the denormalized Account.Balance field (which is always "now," not a historical point in time); verified balances to RM 0 against seeded demo data
+- [x] Income Statement (date range) — verified Net Income matches Balance Sheet's Current Year Earnings exactly
+- [x] Balance Sheet (as-of date) — no formal period-close exists yet (see [16 below](#) / Business_Rules.md), so it balances via a computed "Current Year Earnings" line (all-time Revenue − Expense) folded into Equity, the standard small-business-accounting shortcut for this
+- [x] General Ledger detail (per account, date range) — includes a correctly-computed opening balance from activity before the range, and a running balance per line
+- [ ] All reports exportable as PDF, Excel, CSV — **not built**; reports currently only render in the UI, no `/reports/export` endpoint yet
 
 **Out of scope:** Cash flow statement, budget-vs-actual (v1.1 candidates).
 
