@@ -26,12 +26,13 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 **User story:** As an Admin, I want to assign roles to users, so that each person only sees and does what their job requires.
 
 **Acceptance criteria:**
-- [ ] 6 roles seeded: Admin, Accountant, SalesUser, InventoryManager, Manager, Viewer
-- [ ] Admin can view/assign/revoke roles per user
-- [ ] Admin can view the full permission catalog (read-only in Phase 1 — custom role creation is a later-phase nice-to-have)
-- [ ] Every mutating Accounting endpoint enforces its permission (`Accounting.{Entity}.{Operation}`)
+- [x] 7 roles seeded: Super Admin, Admin, Accountant, SalesUser, InventoryManager, Manager, Viewer — Super Admin was added during implementation (not in the original 6-role plan) as the install owner tier with exclusive `Admin.License.*`/`Admin.FeatureFlags.*` access; see [06_RBAC_Auth.md](../06_RBAC_Auth.md) §6.2
+- [x] Admin can view/assign/revoke roles per user — `GET/PATCH /admin/users`, `POST/DELETE /admin/users/{id}/roles`, live in the Users admin page
+- [x] Admin can view the full permission catalog (read-only in Phase 1 — custom role creation is a later-phase nice-to-have) — `GET /admin/roles`, `GET /admin/permissions`, live in the Roles & Permissions admin page
+- [x] Every mutating Accounting endpoint enforces its permission (`Accounting.{Entity}.{Operation}`)
+- [x] Audit log viewer wired to real data (`GET /admin/audit-logs`) — this was originally scoped under Feature 8 but built alongside this feature since both needed the same admin-endpoint work
 
-**Out of scope:** Custom role creation/editing UI (Phase 1 ships the 6 fixed roles; editable roles noted as a v1.1 candidate).
+**Out of scope:** Custom role creation/editing UI (Phase 1 ships the 7 fixed roles; editable roles noted as a v1.1 candidate).
 
 ---
 
@@ -111,9 +112,9 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 **User story:** As an Admin, I want to see a full history of who changed what, so that I can investigate discrepancies and satisfy compliance requirements.
 
 **Acceptance criteria:**
-- [ ] Every GL entry/account/user/role/permission change is captured automatically (interceptor-based)
-- [ ] Admin can filter by entity, user, date range, action
-- [ ] Before/after values shown as a readable diff
-- [ ] Audit rows are immutable (no edit/delete path exists anywhere in the app)
+- [x] Every GL entry/account/user/role/permission change is captured automatically (interceptor-based)
+- [x] Admin can filter by entity, user, date range, action — `GET /admin/audit-logs` accepts `entityName`/`entityId`/`userId`/`action`/`dateFrom`/`dateTo`; the UI page itself doesn't expose filter controls yet, only the API does
+- [x] Before/after values shown as a readable diff — expandable row with side-by-side JSON in the Audit Logs page
+- [x] Audit rows are immutable (no edit/delete path exists anywhere in the app) — no UPDATE/DELETE MediatR command exists for AuditLog; DB-permission-level enforcement (§7.4) still to be validated as a Phase 5 checklist item
 
 **Out of scope:** Automated archival tooling (manual process documented, not built, in Phase 1 — see [07_Audit_Trail.md](../07_Audit_Trail.md) §7.5).

@@ -19,7 +19,8 @@ public class IdentityService(
     UserManager<AppUser> userManager,
     IFeatureFlagService featureFlagService,
     JwtTokenGenerator jwtTokenGenerator,
-    IAppDbContext db)
+    IAppDbContext db,
+    IDateTimeProvider dateTimeProvider)
 {
     private const string RefreshTokenProvider = "LitXus";
     private const string RefreshTokenName = "RefreshToken";
@@ -70,6 +71,9 @@ public class IdentityService(
         {
             throw new AuthenticationException("Invalid credentials.");
         }
+
+        user.LastLoginAtUtc = dateTimeProvider.UtcNow;
+        await userManager.UpdateAsync(user);
 
         return await IssueSessionAsync(user);
     }

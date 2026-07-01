@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IFeatureFlagService, FeatureFlagService>();
         services.AddScoped<IAuditLogger, AuditLogger>();
         services.AddScoped<INumberSequenceGenerator, NumberSequenceGenerator>();
+        services.AddScoped<IIdentityUserService, IdentityUserService>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<JwtTokenGenerator>();
