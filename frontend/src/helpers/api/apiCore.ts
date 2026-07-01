@@ -13,33 +13,33 @@ axios.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Any status codes that falls outside the range of 2xx cause this function to trigger
-    let message;
-
-    if (error && error.response && error.response.status === 404) {
-      // window.location.href = '/not-found';
-    } else if (error && error.response && error.response.status === 403) {
-      window.location.href = "/access-denied";
-    } else {
-      switch (error.response.status) {
-        case 401:
-          message = "Invalid credentials";
-          break;
-        case 403:
-          message = "Access Forbidden";
-          break;
-        case 404:
-          message = "Sorry! the data you are looking for could not be found";
-          break;
-        default: {
-          message =
-            error.response && error.response.data
-              ? error.response.data["message"]
-              : error.message || error;
-        }
-      }
-      return Promise.reject(message);
+    // Any status codes that falls outside the range of 2xx cause this function to trigger.
+    // NOTE: the stock template's version of this handler had two bugs — a 404 branch that
+    // returned undefined instead of rejecting (callers then crashed trying to read .data off
+    // an undefined response, instead of getting a clean error), and a switch on
+    // error.response.status with no guard for network errors where error.response is undefined
+    // at all (connection refused / CORS failure), which would throw a *different* uncaught
+    // error instead of surfacing the real one. Both are fixed here — always reject with a
+    // message so saga catch blocks (see redux/auth/saga.ts) get something sane to display.
+    if (!error.response) {
+      return Promise.reject(error.message || "Network error — could not reach the server.");
     }
+
+    let message: string;
+    switch (error.response.status) {
+      case 401:
+        message = "Invalid credentials";
+        break;
+      case 403:
+        message = "Access Forbidden";
+        break;
+      case 404:
+        message = "Sorry! the data you are looking for could not be found";
+        break;
+      default:
+        message = error.response.data?.error?.message || error.response.data?.message || error.message || "Unexpected error";
+    }
+    return Promise.reject(message);
   }
 );
 
