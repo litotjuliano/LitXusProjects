@@ -1,0 +1,49 @@
+# LitXus Systems — v1.0 Planning Blueprint
+
+**Company:** LitXus Systems
+**Products:** LitXus Accounting Pro · LitXus Retail Pro · LitXus Enterprise Pro
+**Architecture:** Modular stand-alone (NOT multi-tenant SaaS) — one monorepo, one codebase, feature flags select which modules a given installation exposes.
+**Market:** Malaysia (SMEs, accountants/CPAs/bookkeepers, retailers, mid-size distributors)
+**Method:** Spec-driven development — OpenSpec docs are written and reviewed before any code for a phase is implemented.
+
+> This supersedes and is unrelated to "LitXusCount" (the earlier multi-tenant SaaS learning project). Do not port assumptions, schema, or code from LitXusCount into this project.
+
+## Product-to-Module Matrix
+
+| Product | Accounting | Sales | Inventory | GL Auto-Posting | Price (MYR/yr) |
+|---|---|---|---|---|---|
+| LitXus Accounting Pro | ✅ | ❌ | ❌ | N/A | 2,000–3,000 |
+| LitXus Retail Pro | ❌ | ✅ | ✅ | N/A | 1,500–2,500 |
+| LitXus Enterprise Pro | ✅ | ✅ | ✅ | ✅ optional | 4,000–5,000 |
+
+A single license row (`Licenses` table, see [02_Database_Schema.md](02_Database_Schema.md)) determines which modules a deployed instance may use. The frontend and backend both read this flag set at runtime — there is no per-product build.
+
+## Document Index
+
+| # | Document | Covers |
+|---|---|---|
+| 00 | Overview | This file |
+| 01 | [Architecture](01_Architecture.md) | System architecture, Clean Architecture layers, module boundaries, data flow |
+| 02 | [Database Schema](02_Database_Schema.md) | Full schema, ER relationships, indexes, constraints |
+| 03 | [API Specification](03_API_Specification.md) | Endpoint inventory, request/response shapes, error contract |
+| 04 | [Project Structure](04_Project_Structure.md) | Backend/frontend folder layout, naming conventions, git strategy |
+| 05 | [Phase Breakdown](05_Phase_Breakdown.md) | Deliverables, checklists, effort estimate per phase |
+| 06 | [RBAC & Auth](06_RBAC_Auth.md) | Roles/permissions model, JWT lifecycle, guard implementation |
+| 07 | [Audit Trail](07_Audit_Trail.md) | What's audited, table design, interceptor pattern, retention |
+| 08 | [Sample Data Strategy](08_Sample_Data.md) | Seed data volumes, Malaysia context, seeding mechanism |
+| 09 | [Testing Strategy](09_Testing_Strategy.md) | Unit/integration/UAT approach per module |
+| 10 | [Deployment Architecture](10_Deployment.md) | Dev/demo/production options, Docker, backup/recovery |
+| 11 | [OpenSpec Template](11_OpenSpec_Template.md) | Reusable per-phase spec template + one worked example |
+| 12 | [Documentation Templates](12_Documentation_Templates.md) | User/dev/deployment guide skeletons |
+| 13 | [Implementation Roadmap](13_Roadmap.md) | Week-by-week timeline, critical path, risk register |
+| 14 | [Technology Implementation](14_Tech_Implementation.md) | .NET 9 + React setup specifics, MediatR, EF Core, JWT, Swagger |
+| 15 | [Malaysia Compliance](15_Malaysia_Compliance.md) | SST, MyInvois, PDPA, Companies Act 2016 |
+| 16 | [Feature Flags & Packaging](16_Feature_Flags.md) | Flag mechanism, licensing logic, product config examples |
+
+## Locked Technology Stack
+
+**Backend:** .NET 9, C# 13, Clean Architecture (Presentation / Application / Domain / Infrastructure), EF Core 9, SQL Server 2019+, ASP.NET Core Identity + JWT, Serilog, MediatR, FluentValidation, AutoMapper, xUnit + Moq, Swagger/OpenAPI 3.0.
+
+**Frontend:** Vite, React 18, Zustand, Tailwind CSS, React Router v6, React Hook Form, Axios, Day.js, Recharts, Radix UI / Headless UI, ESLint + Prettier, Vitest.
+
+**Repo:** GitHub monorepo — `/backend`, `/frontend`, `/docs`. Branches: `main` (prod), `develop` (integration), `feature/*`.
