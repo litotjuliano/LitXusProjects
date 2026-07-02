@@ -56,19 +56,31 @@ const Dashboard = () => {
           <h5 className="font-medium text-slate-900 dark:text-slate-200">Recent GL Entries</h5>
         </div>
         <div className="card-body p-0">
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-            {recentEntries.length === 0 && (
-              <li className="px-4 py-6 text-center text-sm text-slate-400">No entries yet.</li>
-            )}
-            {recentEntries.map((e) => (
-              <li key={e.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                <span>{e.entryNumber ?? "(Draft)"}</span>
-                <span className="text-slate-500 dark:text-slate-400">{e.entryDate}</span>
-                <span className="text-slate-500 dark:text-slate-400">{e.status}</span>
-                <span className="text-slate-700 dark:text-slate-300">{e.description}</span>
-              </li>
-            ))}
-          </ul>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                <th className="px-4 py-3 font-medium">Number</th>
+                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentEntries.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-slate-400">No entries yet.</td>
+                </tr>
+              )}
+              {recentEntries.map((e) => (
+                <tr key={e.id} className="border-b border-slate-100 dark:border-slate-800">
+                  <td className="px-4 py-2">{e.entryNumber ?? "(Draft)"}</td>
+                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{e.entryDate}</td>
+                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{e.status}</td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{e.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </>

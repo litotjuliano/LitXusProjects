@@ -1,6 +1,6 @@
 @echo off
 REM LitXus Systems - build + run the full dev stack, then open the browser.
-REM Windows-specific: uses LocalDB via the committed appsettings.Development.json
+REM Windows-specific: uses a local SQL Server instance via the committed appsettings.Development.json
 REM (no Docker/connection-string override needed - see scripts/run-dev.command for macOS).
 
 setlocal
@@ -14,7 +14,7 @@ set "FRONTEND_PORT=5173"
 echo == LitXus Systems - dev build ^& run ==
 echo.
 
-echo Applying database migrations (LocalDB)...
+echo Applying database migrations (SQL Server)...
 pushd "%BACKEND_DIR%"
 dotnet dotnet-ef database update --project src\LitXus.Infrastructure --startup-project src\LitXus.Api
 if errorlevel 1 goto :error
@@ -41,9 +41,20 @@ start "LitXus Frontend" cmd /k "npm run dev"
 popd
 
 echo.
-echo Waiting for servers to start...
-timeout /t 8 /nobreak >nul
+echo Waiting for frontend dev server to be ready...
+set "RETRIES=0"
+:waitloop
+curl -s -o nul --max-time 1 "http://localhost:%FRONTEND_PORT%"
+if not errorlevel 1 goto :ready
+set /a RETRIES+=1
+if %RETRIES% GEQ 60 (
+    echo Frontend did not respond within 60 seconds - opening browser anyway.
+    goto :ready
+)
+timeout /t 1 /nobreak >nul
+goto :waitloop
 
+:ready
 echo.
 echo Opening browser...
 start "" "http://localhost:%FRONTEND_PORT%/auth/login"

@@ -10,7 +10,11 @@
         .card-header {
             @apply py-3 px-6 border-b border-gray-200 dark:border-gray-700;
         }
-    }    
+
+        .card-body {
+            @apply p-6;
+        }
+    }
 
     .card-title {
         @apply text-base font-medium text-slate-900 dark:text-slate-200;
