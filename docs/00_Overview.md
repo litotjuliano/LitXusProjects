@@ -39,6 +39,8 @@ A single license row (`Licenses` table, see [02_Database_Schema.md](02_Database_
 | 14 | [Technology Implementation](14_Tech_Implementation.md) | .NET 10 + React setup specifics, MediatR, EF Core, JWT, Swagger |
 | 15 | [Malaysia Compliance](15_Malaysia_Compliance.md) | SST, MyInvois, PDPA, Companies Act 2016 |
 | 16 | [Feature Flags & Packaging](16_Feature_Flags.md) | Flag mechanism, licensing logic, product config examples |
+| 17 | [License Generator](17_License_Generator.md) | Offline signing tool (`backend/tools/LitXus.LicenseGenerator`) — keypair/license generation, applying keys, rotation, troubleshooting |
+| — | [Phase 1 User Guide](phase-1-accounting/User_Guide.md) | Click-by-click walkthrough for manually keying in Chart of Accounts / GL Entries / Reports through the actual UI, with screenshots |
 
 ## Locked Technology Stack
 

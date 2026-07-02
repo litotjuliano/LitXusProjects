@@ -12,9 +12,12 @@ frontend/.vite/
 *.env
 .env.local
 .env.production
+*.pem
+backend/tools/LitXus.LicenseGenerator/keys/
 
 # OS
 .DS_Store
+._*
 
 # IDE
 .vs/

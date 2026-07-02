@@ -43,11 +43,15 @@ public static class DependencyInjection
         services.AddScoped<INumberSequenceGenerator, NumberSequenceGenerator>();
         services.AddScoped<IIdentityUserService, IdentityUserService>();
 
+        services.Configure<LicensingOptions>(configuration.GetSection(LicensingOptions.SectionName));
+        services.AddSingleton<ILicenseKeyVerifier, LicenseKeyVerifier>();
+
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IdentityService>();
 
         services.AddScoped<ISeeder, RbacSeeder>();
+        services.AddScoped<ISeeder, CompanySeeder>();
         services.AddScoped<ISeeder, LicenseSeeder>();
         services.AddScoped<ISeeder, UserSeeder>();
         services.AddScoped<ISeeder, AccountingDemoDataSeeder>();

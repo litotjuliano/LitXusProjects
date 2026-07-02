@@ -33,4 +33,20 @@ public class License : BaseEntity
         EnabledModules.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     public bool IsExpired(DateTime utcNow) => utcNow > ExpiresAtUtc;
+
+    /// <summary>
+    /// Applies every field from a signature-verified license key token atomically — see
+    /// ILicenseKeyVerifier. All fields (including EnabledModules and IssuedToCompany) come from
+    /// the token, not independently editable; there is no partial-update path anymore, since a
+    /// license is one signed unit, not a set of freely-editable fields.
+    /// </summary>
+    public void ApplyVerifiedKey(string productCode, string issuedToCompany, IReadOnlyList<string> enabledModules, DateTime issuedAtUtc, DateTime expiresAtUtc, string rawLicenseKey)
+    {
+        ProductCode = productCode;
+        IssuedToCompany = issuedToCompany;
+        EnabledModules = string.Join(",", enabledModules);
+        IssuedAtUtc = issuedAtUtc;
+        ExpiresAtUtc = expiresAtUtc;
+        LicenseKey = rawLicenseKey;
+    }
 }

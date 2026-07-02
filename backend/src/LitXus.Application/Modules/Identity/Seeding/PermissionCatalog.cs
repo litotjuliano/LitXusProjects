@@ -34,6 +34,9 @@ public static class PermissionCatalog
         new("Accounting", "Reports", "Read"),
         new("Accounting", "Reports", "Export"),
 
+        new("Company", "Profile", "Read"),
+        new("Company", "Profile", "Update"),
+
         new("Admin", "Users", "Read"),
         new("Admin", "Users", "Update"),
         new("Admin", "Roles", "Read"),
@@ -41,7 +44,5 @@ public static class PermissionCatalog
         new("Admin", "AuditLogs", "Read"),
         new("Admin", "License", "Read"),
         new("Admin", "License", "Update"),
-        new("Admin", "FeatureFlags", "Read"),
-        new("Admin", "FeatureFlags", "Update"),
     ];
 }
