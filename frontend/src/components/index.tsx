@@ -14,6 +14,7 @@ import NotificationDropdown from "./NotificationDropDown";
 import ProfileDropDown from "./ProfileDropDown";
 import PageBreadcrumb from "./PageBreadcrumb";
 import Preloader from "./Preloader";
+import DataTable from "./DataTable";
 
 export {
   VerticalForm,
@@ -32,4 +33,6 @@ export {
   ProfileDropDown,
   PageBreadcrumb,
   Preloader,
+  DataTable,
 };
+export type { DataTableColumn } from "./DataTable";

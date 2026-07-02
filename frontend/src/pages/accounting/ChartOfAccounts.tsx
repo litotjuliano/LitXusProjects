@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-import { PageBreadcrumb, FormInput, VerticalForm } from "../../components";
+import { PageBreadcrumb, FormInput, VerticalForm, DataTable, type DataTableColumn } from "../../components";
 import ModalLayout from "../../components/HeadlessUI/ModalLayout";
 import {
   listAccounts,
@@ -23,6 +23,7 @@ const ChartOfAccounts = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchAccounts = () => {
     setLoading(true);
@@ -42,10 +43,39 @@ const ChartOfAccounts = () => {
     })
   );
 
+  const columns: DataTableColumn<Account>[] = [
+    { key: "code", header: "Code", render: (a) => a.code, sortAccessor: (a) => a.code },
+    { key: "name", header: "Name", render: (a) => a.name, sortAccessor: (a) => a.name },
+    { key: "type", header: "Type", render: (a) => a.type, sortAccessor: (a) => a.type },
+    {
+      key: "balance",
+      header: "Balance",
+      className: "text-right",
+      headerClassName: "text-right",
+      render: (a) => a.balance.toFixed(2),
+      sortAccessor: (a) => a.balance,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (a) => (
+        <span className={a.isActive ? "text-emerald-600" : "text-slate-400"}>
+          {a.isActive ? "Active" : "Inactive"}
+        </span>
+      ),
+      sortAccessor: (a) => (a.isActive ? 1 : 0),
+    },
+  ];
+
   const onSubmit = async (formData: AccountFormValues) => {
-    await createAccount({ ...formData, parentAccountId: null });
-    setShowModal(false);
-    fetchAccounts();
+    setFormError(null);
+    try {
+      await createAccount({ ...formData, parentAccountId: null });
+      setShowModal(false);
+      fetchAccounts();
+    } catch (err) {
+      setFormError(typeof err === "string" ? err : "Could not create the account. Please try again.");
+    }
   };
 
   return (
@@ -53,54 +83,24 @@ const ChartOfAccounts = () => {
       <PageBreadcrumb title="Chart of Accounts" name="Chart of Accounts" breadCrumbItems={["Accounting", "Chart of Accounts"]}>
         <button
           className="btn text-white bg-primary text-sm"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setFormError(null);
+            setShowModal(true);
+          }}
         >
           + New Account
         </button>
       </PageBreadcrumb>
 
-      <div className="card">
-        <div className="card-body p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                <th className="px-4 py-3 font-medium">Code</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium text-right">Balance</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">Loading…</td>
-                </tr>
-              )}
-              {!loading && accounts.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                    No accounts yet. Create your first account to get started.
-                  </td>
-                </tr>
-              )}
-              {!loading && accounts.map((a) => (
-                <tr key={a.id} className="border-b border-slate-100 dark:border-slate-800">
-                  <td className="px-4 py-2">{a.code}</td>
-                  <td className="px-4 py-2">{a.name}</td>
-                  <td className="px-4 py-2">{a.type}</td>
-                  <td className="px-4 py-2 text-right">{a.balance.toFixed(2)}</td>
-                  <td className="px-4 py-2">
-                    <span className={a.isActive ? "text-emerald-600" : "text-slate-400"}>
-                      {a.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable<Account>
+        columns={columns}
+        data={accounts}
+        rowKey={(a) => a.id}
+        loading={loading}
+        emptyMessage="No accounts yet. Create your first account to get started."
+        searchPlaceholder="Search by code, name, or type…"
+        searchAccessor={(a) => `${a.code} ${a.name} ${a.type}`}
+      />
 
       <ModalLayout showModal={showModal} toggleModal={() => setShowModal(false)} panelClassName="w-full max-w-lg bg-white dark:bg-slate-800 p-6">
         <h5 className="text-lg font-medium text-slate-900 dark:text-slate-200 mb-4">New Account</h5>
@@ -135,6 +135,7 @@ const ChartOfAccounts = () => {
               <option key={t} value={t}>{t}</option>
             ))}
           </FormInput>
+          <div className="text-sm text-red-600 mb-3">{formError}</div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => setShowModal(false)}>
               Cancel

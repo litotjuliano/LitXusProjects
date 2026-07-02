@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PageBreadcrumb } from "../../components";
+import { PageBreadcrumb, DataTable, type DataTableColumn } from "../../components";
 import { listAuditLogs, type AuditLog } from "../../helpers/api/admin";
 
 const actionStyles: Record<string, string> = {
@@ -26,76 +26,73 @@ const AuditLogs = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const columns: DataTableColumn<AuditLog>[] = [
+    {
+      key: "time",
+      header: "Time",
+      className: "whitespace-nowrap",
+      render: (log) => (
+        <span className="text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          {new Date(log.timestampUtc).toLocaleString()}
+        </span>
+      ),
+      sortAccessor: (log) => log.timestampUtc,
+    },
+    { key: "user", header: "User", render: (log) => log.userEmail ?? "—", sortAccessor: (log) => log.userEmail ?? "" },
+    {
+      key: "action",
+      header: "Action",
+      render: (log) => <span className={actionStyles[log.action] ?? "text-slate-500"}>{log.action}</span>,
+      sortAccessor: (log) => log.action,
+    },
+    {
+      key: "entity",
+      header: "Entity",
+      render: (log) => (
+        <>
+          {log.entityName} <span className="text-slate-400 font-mono text-xs">{log.entityId.slice(0, 8)}</span>
+        </>
+      ),
+      sortAccessor: (log) => log.entityName,
+    },
+    {
+      key: "reason",
+      header: "Reason",
+      render: (log) => <span className="text-slate-500 dark:text-slate-400">{log.reason ?? "—"}</span>,
+    },
+  ];
+
   return (
     <>
       <PageBreadcrumb title="Audit Logs" name="Audit Logs" breadCrumbItems={["Administration", "Audit Logs"]} />
-      <div className="card">
-        <div className="card-body p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                <th className="px-4 py-3 font-medium">Time</th>
-                <th className="px-4 py-3 font-medium">User</th>
-                <th className="px-4 py-3 font-medium">Action</th>
-                <th className="px-4 py-3 font-medium">Entity</th>
-                <th className="px-4 py-3 font-medium">Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">Loading…</td></tr>
-              )}
-              {!loading && logs.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">No audit activity yet.</td></tr>
-              )}
-              {!loading && logs.map((log) => {
-                const isExpanded = expandedId === log.id;
-                return (
-                  <>
-                    <tr
-                      key={log.id}
-                      onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                      className="cursor-pointer border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    >
-                      <td className="px-4 py-2 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        {new Date(log.timestampUtc).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-2">{log.userEmail ?? "—"}</td>
-                      <td className="px-4 py-2">
-                        <span className={actionStyles[log.action] ?? "text-slate-500"}>{log.action}</span>
-                      </td>
-                      <td className="px-4 py-2">
-                        {log.entityName} <span className="text-slate-400 font-mono text-xs">{log.entityId.slice(0, 8)}</span>
-                      </td>
-                      <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{log.reason ?? "—"}</td>
-                    </tr>
-                    {isExpanded && (
-                      <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                        <td colSpan={5} className="px-4 py-3">
-                          <div className="grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                              <p className="mb-1 font-medium text-slate-500">Before</p>
-                              <pre className="whitespace-pre-wrap rounded bg-white dark:bg-slate-800 p-2 font-mono">
-                                {log.beforeValuesJson ? JSON.stringify(JSON.parse(log.beforeValuesJson), null, 2) : "—"}
-                              </pre>
-                            </div>
-                            <div>
-                              <p className="mb-1 font-medium text-slate-500">After</p>
-                              <pre className="whitespace-pre-wrap rounded bg-white dark:bg-slate-800 p-2 font-mono">
-                                {log.afterValuesJson ? JSON.stringify(JSON.parse(log.afterValuesJson), null, 2) : "—"}
-                              </pre>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable<AuditLog>
+        columns={columns}
+        data={logs}
+        rowKey={(log) => log.id}
+        loading={loading}
+        emptyMessage="No audit activity yet."
+        searchPlaceholder="Search by user, action, entity, or reason…"
+        searchAccessor={(log) => `${log.userEmail ?? ""} ${log.action} ${log.entityName} ${log.reason ?? ""}`}
+        pageSize={15}
+        onRowClick={(log) => setExpandedId(expandedId === log.id ? null : log.id)}
+        isRowExpanded={(log) => expandedId === log.id}
+        renderExpanded={(log) => (
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <p className="mb-1 font-medium text-slate-500">Before</p>
+              <pre className="whitespace-pre-wrap rounded bg-white dark:bg-slate-800 p-2 font-mono">
+                {log.beforeValuesJson ? JSON.stringify(JSON.parse(log.beforeValuesJson), null, 2) : "—"}
+              </pre>
+            </div>
+            <div>
+              <p className="mb-1 font-medium text-slate-500">After</p>
+              <pre className="whitespace-pre-wrap rounded bg-white dark:bg-slate-800 p-2 font-mono">
+                {log.afterValuesJson ? JSON.stringify(JSON.parse(log.afterValuesJson), null, 2) : "—"}
+              </pre>
+            </div>
+          </div>
+        )}
+      />
     </>
   );
 };

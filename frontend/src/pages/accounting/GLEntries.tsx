@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
-import { PageBreadcrumb } from "../../components";
+import { PageBreadcrumb, DataTable, type DataTableColumn } from "../../components";
 import ModalLayout from "../../components/HeadlessUI/ModalLayout";
 import {
   listAccounts,
@@ -30,6 +30,7 @@ const GLEntries = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchEntries = () => {
     setLoading(true);
@@ -60,56 +61,53 @@ const GLEntries = () => {
   const totalCredit = lines.reduce((sum, l) => sum + (Number(l.creditAmount) || 0), 0);
   const isBalanced = totalDebit === totalCredit && totalDebit > 0 && lines.length >= 2;
 
+  const columns: DataTableColumn<GLEntry>[] = [
+    { key: "number", header: "Number", render: (e) => e.entryNumber ?? "(Draft)", sortAccessor: (e) => e.entryNumber ?? "" },
+    { key: "date", header: "Date", render: (e) => e.entryDate, sortAccessor: (e) => e.entryDate },
+    {
+      key: "status",
+      header: "Status",
+      render: (e) => <span className={statusStyles[e.status]}>{e.status}</span>,
+      sortAccessor: (e) => e.status,
+    },
+    { key: "description", header: "Description", render: (e) => e.description, sortAccessor: (e) => e.description },
+  ];
+
   const closeModal = () => {
     setShowModal(false);
+    setFormError(null);
     reset();
   };
 
   const submit = async (values: GLEntryFormValues, post: boolean) => {
-    const entry = await createGLEntry(values).then((res) => res.data.data);
-    if (post) await postGLEntry(entry.id);
-    closeModal();
-    fetchEntries();
+    setFormError(null);
+    try {
+      const entry = await createGLEntry(values).then((res) => res.data.data);
+      if (post) await postGLEntry(entry.id);
+      closeModal();
+      fetchEntries();
+    } catch (err) {
+      setFormError(typeof err === "string" ? err : "Could not save the entry. Please try again.");
+    }
   };
 
   return (
     <>
       <PageBreadcrumb title="GL Entries" name="GL Entries" breadCrumbItems={["Accounting", "GL Entries"]}>
-        <button className="btn text-white bg-primary text-sm" onClick={() => setShowModal(true)}>
+        <button className="btn text-white bg-primary text-sm" onClick={() => { setFormError(null); setShowModal(true); }}>
           + New Entry
         </button>
       </PageBreadcrumb>
 
-      <div className="card">
-        <div className="card-body p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                <th className="px-4 py-3 font-medium">Number</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">Loading…</td></tr>
-              )}
-              {!loading && entries.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No GL entries yet.</td></tr>
-              )}
-              {!loading && entries.map((e) => (
-                <tr key={e.id} className="border-b border-slate-100 dark:border-slate-800">
-                  <td className="px-4 py-2">{e.entryNumber ?? "(Draft)"}</td>
-                  <td className="px-4 py-2">{e.entryDate}</td>
-                  <td className="px-4 py-2"><span className={statusStyles[e.status]}>{e.status}</span></td>
-                  <td className="px-4 py-2">{e.description}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable<GLEntry>
+        columns={columns}
+        data={entries}
+        rowKey={(e) => e.id}
+        loading={loading}
+        emptyMessage="No GL entries yet."
+        searchPlaceholder="Search by number or description…"
+        searchAccessor={(e) => `${e.entryNumber ?? ""} ${e.description}`}
+      />
 
       <ModalLayout showModal={showModal} toggleModal={closeModal} panelClassName="w-full max-w-3xl bg-white dark:bg-slate-800 p-6">
         <h5 className="text-lg font-medium text-slate-900 dark:text-slate-200 mb-4">New GL Entry</h5>
@@ -177,6 +175,10 @@ const GLEntries = () => {
             </span>
             <span className="font-mono">{totalDebit.toFixed(2)} / {totalCredit.toFixed(2)}</span>
           </div>
+
+          {formError && (
+            <div className="text-sm text-red-600">{formError}</div>
+          )}
 
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={closeModal}>
