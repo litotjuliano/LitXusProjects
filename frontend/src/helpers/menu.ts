@@ -5,6 +5,18 @@ const getMenuItems = () => {
   return MENU_ITEMS;
 }
 
+/** Drops any item (and its children) whose `module` isn't in the caller's enabledModules — see docs/16_Feature_Flags.md §16.2. */
+const filterMenuByModules = (menuItems: MenuItemTypes[], enabledModules: string[]): MenuItemTypes[] =>
+  menuItems
+    .filter((item) => !item.module || enabledModules.includes(item.module))
+    .map((item) => (item.children ? { ...item, children: filterMenuByModules(item.children, enabledModules) } : item));
+
+/** Drops any item (and its children) whose `roles` doesn't include one of the caller's roles. */
+const filterMenuByRoles = (menuItems: MenuItemTypes[], userRoles: string[]): MenuItemTypes[] =>
+  menuItems
+    .filter((item) => !item.roles || item.roles.some((r) => userRoles.includes(r)))
+    .map((item) => (item.children ? { ...item, children: filterMenuByRoles(item.children, userRoles) } : item));
+
 const findAllParent = (
   menuItems: MenuItemTypes[],
   menuItem: MenuItemTypes
@@ -37,4 +49,4 @@ const findMenuItem = (
   return null;
 }
 
-export { getMenuItems, findAllParent, findMenuItem, };
+export { getMenuItems, filterMenuByModules, filterMenuByRoles, findAllParent, findMenuItem, };

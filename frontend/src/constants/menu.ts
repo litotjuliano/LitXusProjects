@@ -7,6 +7,10 @@ export interface MenuItemTypes {
   parentKey?: string;
   target?: string;
   children?: MenuItemTypes[];
+  /** If set, this item (and its children) is hidden unless the module is in the license's EnabledModules. */
+  module?: string;
+  /** If set, this item (and its children) is hidden unless the current user holds one of these roles. */
+  roles?: string[];
 }
 
 // LitXus Accounting Pro (Phase 1) navigation. Sales/Inventory sections are added
@@ -29,6 +33,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     key: 'accounting',
     label: 'Accounting',
     isTitle: true,
+    module: 'Accounting',
   },
   {
     key: 'accounting-chart-of-accounts',
@@ -36,6 +41,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_list_check_line',
     url: '/accounting/chart-of-accounts',
+    module: 'Accounting',
   },
   {
     key: 'accounting-gl-entries',
@@ -43,6 +49,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_book_2_line',
     url: '/accounting/gl-entries',
+    module: 'Accounting',
   },
   {
     key: 'accounting-bank-reconciliation',
@@ -50,12 +57,14 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_bank_card_line',
     url: '/accounting/bank-reconciliation',
+    module: 'Accounting',
   },
   {
     key: 'accounting-reports',
     label: 'Reports',
     isTitle: false,
     icon: 'mgc_chart_bar_line',
+    module: 'Accounting',
     children: [
       {
         key: 'reports-trial-balance',
@@ -89,6 +98,13 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: true,
   },
   {
+    key: 'admin-company-profile',
+    label: 'Company Profile',
+    isTitle: false,
+    icon: 'mgc_building_2_line',
+    url: '/admin/company-profile',
+  },
+  {
     key: 'admin-users',
     label: 'Users',
     isTitle: false,
@@ -108,6 +124,14 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_time_line',
     url: '/admin/audit-logs',
+  },
+  {
+    key: 'admin-license',
+    label: 'License',
+    isTitle: false,
+    icon: 'mgc_key_2_line',
+    url: '/admin/license',
+    roles: ['Super Admin'],
   },
 ];
 

@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import SimpleBar from "simplebar-react";
 import { useSelector } from "react-redux";
-import { getMenuItems } from "../helpers/menu";
+import { getMenuItems, filterMenuByModules, filterMenuByRoles } from "../helpers/menu";
 
 // constants
 import AppMenu from "./Menu";
@@ -15,8 +15,11 @@ import { changeSideBarType } from "../redux/actions";
 
 /* Sidebar content */
 const SideBarContent = () => {
+  const enabledModules = useSelector((state: RootState) => (state.Auth.user as any)?.enabledModules ?? []);
+  const userRoles = useSelector((state: RootState) => (state.Auth.user as any)?.roles ?? []);
+  const items = filterMenuByRoles(filterMenuByModules(getMenuItems(), enabledModules), userRoles);
   return (
-    <AppMenu menuItems={getMenuItems()} />
+    <AppMenu menuItems={items} />
   )
 }
 
