@@ -17,11 +17,15 @@ public class GetRolesQueryHandler(IAppDbContext db) : IRequestHandler<GetRolesQu
             select new { rp.RoleId, p.Code }
         ).ToListAsync(cancellationToken);
 
-        return roles.Select(r => new RoleDto(
-            r.Id,
-            r.Name,
-            r.Description,
-            rolePermissionCodes.Where(rp => rp.RoleId == r.Id).Select(rp => rp.Code).OrderBy(c => c).ToList())
-        ).ToList();
+        return roles
+            // Super Admin is the install owner — excluded here for the same reason it's excluded
+            // from the Users list: it shouldn't be inspectable/manageable via the general admin UI.
+            .Where(r => r.Name != "Super Admin")
+            .Select(r => new RoleDto(
+                r.Id,
+                r.Name,
+                r.Description,
+                rolePermissionCodes.Where(rp => rp.RoleId == r.Id).Select(rp => rp.Code).OrderBy(c => c).ToList())
+            ).ToList();
     }
 }

@@ -19,13 +19,18 @@ public class IdentityUserService(UserManager<AppUser> userManager, IAppDbContext
             .Join(db.AppRoles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
             .ToListAsync(cancellationToken);
 
-        return users.Select(u => new UserSummaryDto(
-            u.Id,
-            u.FullName,
-            u.Email ?? string.Empty,
-            u.IsActive,
-            userRoles.Where(ur => ur.UserId == u.Id).Select(ur => ur.Name).ToList(),
-            u.LastLoginAtUtc)).ToList();
+        return users
+            .Select(u => new UserSummaryDto(
+                u.Id,
+                u.FullName,
+                u.Email ?? string.Empty,
+                u.IsActive,
+                userRoles.Where(ur => ur.UserId == u.Id).Select(ur => ur.Name).ToList(),
+                u.LastLoginAtUtc))
+            // Super Admin is the install owner — excluded from the general Users list so it can't be
+            // deactivated or otherwise managed there by anyone, including another Admin.
+            .Where(u => !u.Roles.Contains("Super Admin"))
+            .ToList();
     }
 
     public async Task SetUserActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken)

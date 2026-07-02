@@ -10,10 +10,15 @@ public class AssignRoleCommandHandler(IAppDbContext db, IAuditLogger auditLogger
 {
     public async Task Handle(AssignRoleCommand request, CancellationToken cancellationToken)
     {
-        var roleExists = await db.AppRoles.AnyAsync(r => r.Id == request.RoleId, cancellationToken);
-        if (!roleExists)
+        var role = await db.AppRoles.FirstOrDefaultAsync(r => r.Id == request.RoleId, cancellationToken)
+            ?? throw new NotFoundException(nameof(Role), request.RoleId);
+
+        // Super Admin is provisioned only via seeding, never through the general user-role-assignment
+        // endpoint — otherwise any Admin (who holds Admin.Users.Update) could grant themselves or
+        // anyone else full install-owner access.
+        if (role.Name == "Super Admin")
         {
-            throw new NotFoundException(nameof(Role), request.RoleId);
+            throw new ForbiddenException("The Super Admin role cannot be assigned through this endpoint.");
         }
 
         var alreadyAssigned = await db.AppUserRoles
