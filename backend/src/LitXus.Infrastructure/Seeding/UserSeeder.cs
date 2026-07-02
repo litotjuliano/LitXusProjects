@@ -15,7 +15,7 @@ public class UserSeeder(IAppDbContext db, UserManager<AppUser> userManager) : IS
 {
     private const string DemoPassword = "Demo@12345";
 
-    public int Order => 3;
+    public int Order => 4;
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {

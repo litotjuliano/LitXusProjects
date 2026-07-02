@@ -15,6 +15,7 @@ import ProfileDropDown from "./ProfileDropDown";
 import PageBreadcrumb from "./PageBreadcrumb";
 import Preloader from "./Preloader";
 import DataTable from "./DataTable";
+import ReportLetterhead from "./ReportLetterhead";
 
 export {
   VerticalForm,
@@ -34,5 +35,6 @@ export {
   PageBreadcrumb,
   Preloader,
   DataTable,
+  ReportLetterhead,
 };
 export type { DataTableColumn } from "./DataTable";

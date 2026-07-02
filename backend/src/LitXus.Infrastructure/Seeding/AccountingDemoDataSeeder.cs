@@ -21,7 +21,7 @@ public class AccountingDemoDataSeeder(
     INumberSequenceGenerator numberSequenceGenerator,
     IDateTimeProvider dateTimeProvider) : ISeeder
 {
-    public int Order => 4;
+    public int Order => 5;
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {

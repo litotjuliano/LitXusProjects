@@ -20,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<License> Licenses => Set<License>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Company> Companies => Set<Company>();
+    public DbSet<CompanySignatory> CompanySignatories => Set<CompanySignatory>();
 
     // Accounting
     public DbSet<Account> Accounts => Set<Account>();

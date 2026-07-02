@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { PageBreadcrumb } from "../../../components";
+import { PageBreadcrumb, ReportLetterhead } from "../../../components";
+import { useCompanyProfile } from "../../../hooks";
 import { getGeneralLedger, type GeneralLedger as GeneralLedgerData } from "../../../helpers/api/reports";
 import { listAccounts, type Account } from "../../../helpers/api/accounting";
 import { formatCurrency } from "../../../utils/currency";
@@ -8,6 +9,7 @@ const startOfYear = () => `${new Date().getFullYear()}-01-01`;
 const today = () => new Date().toISOString().slice(0, 10);
 
 const GeneralLedger = () => {
+  const company = useCompanyProfile();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [from, setFrom] = useState(startOfYear());
@@ -48,6 +50,8 @@ const GeneralLedger = () => {
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="form-input text-sm" />
         </div>
       </PageBreadcrumb>
+
+      <ReportLetterhead company={company} />
 
       {accounts.length === 0 && (
         <div className="card"><div className="card-body text-sm text-slate-400">No accounts yet — create one in Chart of Accounts first.</div></div>

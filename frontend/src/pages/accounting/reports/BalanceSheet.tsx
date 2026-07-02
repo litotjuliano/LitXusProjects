@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { PageBreadcrumb } from "../../../components";
+import { PageBreadcrumb, ReportLetterhead } from "../../../components";
+import { useCompanyProfile } from "../../../hooks";
 import { getBalanceSheet, type BalanceSheet as BalanceSheetData, type BalanceSheetLine } from "../../../helpers/api/reports";
 import { formatCurrency } from "../../../utils/currency";
 
@@ -29,6 +30,7 @@ const Section = ({ title, lines, total }: { title: string; lines: BalanceSheetLi
 );
 
 const BalanceSheet = () => {
+  const company = useCompanyProfile();
   const [asOfDate, setAsOfDate] = useState(today());
   const [data, setData] = useState<BalanceSheetData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,8 @@ const BalanceSheet = () => {
       <PageBreadcrumb title="Balance Sheet" name="Balance Sheet" breadCrumbItems={["Accounting", "Reports", "Balance Sheet"]}>
         <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="form-input text-sm" />
       </PageBreadcrumb>
+
+      <ReportLetterhead company={company} />
 
       {loading && <div className="card"><div className="card-body text-sm text-slate-400">Loading…</div></div>}
 

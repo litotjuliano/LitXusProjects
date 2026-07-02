@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { PageBreadcrumb } from "../../../components";
+import { PageBreadcrumb, ReportLetterhead } from "../../../components";
+import { useCompanyProfile } from "../../../hooks";
 import { getTrialBalance, type TrialBalance as TrialBalanceData } from "../../../helpers/api/reports";
 import { formatCurrency } from "../../../utils/currency";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 const TrialBalance = () => {
+  const company = useCompanyProfile();
   const [asOfDate, setAsOfDate] = useState(today());
   const [data, setData] = useState<TrialBalanceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,8 @@ const TrialBalance = () => {
           className="form-input text-sm"
         />
       </PageBreadcrumb>
+
+      <ReportLetterhead company={company} />
 
       <div className="card">
         <div className="card-body p-0">

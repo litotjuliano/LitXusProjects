@@ -22,6 +22,8 @@ public interface IAppDbContext
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<License> Licenses { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<Company> Companies { get; }
+    DbSet<CompanySignatory> CompanySignatories { get; }
 
     // Accounting
     DbSet<Account> Accounts { get; }
