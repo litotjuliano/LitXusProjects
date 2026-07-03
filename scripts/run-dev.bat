@@ -14,6 +14,15 @@ set "FRONTEND_PORT=5173"
 echo == LitXus Systems - dev build ^& run ==
 echo.
 
+echo Freeing ports %API_PORT% and %FRONTEND_PORT% (killing any process already listening)...
+for %%P in (%API_PORT% %FRONTEND_PORT%) do (
+    for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%%P " ^| findstr "LISTENING"') do (
+        echo   Killing PID %%A on port %%P
+        taskkill /F /PID %%A >nul 2>&1
+    )
+)
+
+echo.
 echo Applying database migrations (SQL Server)...
 pushd "%BACKEND_DIR%"
 dotnet dotnet-ef database update --project src\LitXus.Infrastructure --startup-project src\LitXus.Api
