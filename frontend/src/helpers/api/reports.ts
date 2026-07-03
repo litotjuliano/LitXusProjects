@@ -87,4 +87,34 @@ function getGeneralLedger(accountId: string, from?: string, to?: string) {
   return api.get("/accounting/reports/general-ledger", params);
 }
 
-export { getTrialBalance, getBalanceSheet, getIncomeStatement, getGeneralLedger };
+type ExportFormat = "pdf" | "excel";
+
+function exportTrialBalance(format: ExportFormat, asOfDate?: string) {
+  return api.getFile(`/accounting/reports/trial-balance/${format}`, asOfDate ? { asOfDate } : null);
+}
+
+function exportBalanceSheet(format: ExportFormat, asOfDate?: string) {
+  return api.getFile(`/accounting/reports/balance-sheet/${format}`, asOfDate ? { asOfDate } : null);
+}
+
+function exportIncomeStatement(format: ExportFormat, from?: string, to?: string) {
+  return api.getFile(`/accounting/reports/income-statement/${format}`, from && to ? { from, to } : null);
+}
+
+function exportGeneralLedger(format: ExportFormat, accountId: string, from?: string, to?: string) {
+  const params: Record<string, string> = { accountId };
+  if (from) params.from = from;
+  if (to) params.to = to;
+  return api.getFile(`/accounting/reports/general-ledger/${format}`, params);
+}
+
+export {
+  getTrialBalance,
+  getBalanceSheet,
+  getIncomeStatement,
+  getGeneralLedger,
+  exportTrialBalance,
+  exportBalanceSheet,
+  exportIncomeStatement,
+  exportGeneralLedger,
+};

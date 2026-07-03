@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { PageBreadcrumb, ReportLetterhead } from "../../../components";
 import { useCompanyProfile } from "../../../hooks";
-import { getTrialBalance, type TrialBalance as TrialBalanceData } from "../../../helpers/api/reports";
+import { getTrialBalance, exportTrialBalance, type TrialBalance as TrialBalanceData } from "../../../helpers/api/reports";
 import { formatCurrency } from "../../../utils/currency";
+import { downloadCsv } from "../../../utils/csvExport";
+import { downloadBlob } from "../../../utils/fileDownload";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -22,15 +24,45 @@ const TrialBalance = () => {
 
   const isBalanced = data && data.totalDebit === data.totalCredit;
 
+  const handleExport = () => {
+    if (!data) return;
+    const rows: (string | number)[][] = [
+      ["Trial Balance", `As of ${data.asOfDate}`],
+      [],
+      ["Code", "Account", "Type", "Debit", "Credit"],
+      ...data.lines.map((l) => [l.accountCode, l.accountName, l.accountType, l.debit, l.credit]),
+      [],
+      ["Total", "", "", data.totalDebit, data.totalCredit],
+    ];
+    downloadCsv(`trial-balance-${data.asOfDate}.csv`, rows);
+  };
+
+  const handleExportFile = async (format: "pdf" | "excel") => {
+    if (!data) return;
+    const res = await exportTrialBalance(format, data.asOfDate);
+    downloadBlob(res.data, `trial-balance-${data.asOfDate}.${format === "pdf" ? "pdf" : "xlsx"}`);
+  };
+
   return (
     <>
       <PageBreadcrumb title="Trial Balance" name="Trial Balance" breadCrumbItems={["Accounting", "Reports", "Trial Balance"]}>
-        <input
-          type="date"
-          value={asOfDate}
-          onChange={(e) => setAsOfDate(e.target.value)}
-          className="form-input text-sm"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={asOfDate}
+            onChange={(e) => setAsOfDate(e.target.value)}
+            className="form-input text-sm"
+          />
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={handleExport} disabled={!data}>
+            Export CSV
+          </button>
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => handleExportFile("pdf")} disabled={!data}>
+            Export PDF
+          </button>
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => handleExportFile("excel")} disabled={!data}>
+            Export Excel
+          </button>
+        </div>
       </PageBreadcrumb>
 
       <ReportLetterhead company={company} />

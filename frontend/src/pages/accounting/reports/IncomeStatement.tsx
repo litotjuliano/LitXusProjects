@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { PageBreadcrumb, ReportLetterhead } from "../../../components";
 import { useCompanyProfile } from "../../../hooks";
-import { getIncomeStatement, type IncomeStatement as IncomeStatementData } from "../../../helpers/api/reports";
+import { getIncomeStatement, exportIncomeStatement, type IncomeStatement as IncomeStatementData } from "../../../helpers/api/reports";
 import { formatCurrency } from "../../../utils/currency";
+import { downloadCsv } from "../../../utils/csvExport";
+import { downloadBlob } from "../../../utils/fileDownload";
 
 const startOfYear = () => `${new Date().getFullYear()}-01-01`;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -22,6 +24,30 @@ const IncomeStatement = () => {
       .finally(() => setLoading(false));
   }, [from, to]);
 
+  const handleExport = () => {
+    if (!data) return;
+    const rows: (string | number)[][] = [
+      ["Income Statement", `${data.from} to ${data.to}`],
+      [],
+      ["Revenue"],
+      ...data.revenue.map((l) => [l.accountCode, l.accountName, l.amount]),
+      ["", "Total Revenue", data.totalRevenue],
+      [],
+      ["Expenses"],
+      ...data.expenses.map((l) => [l.accountCode, l.accountName, l.amount]),
+      ["", "Total Expenses", data.totalExpenses],
+      [],
+      ["", data.netIncome >= 0 ? "Net Income" : "Net Loss", data.netIncome],
+    ];
+    downloadCsv(`income-statement-${data.from}-to-${data.to}.csv`, rows);
+  };
+
+  const handleExportFile = async (format: "pdf" | "excel") => {
+    if (!data) return;
+    const res = await exportIncomeStatement(format, data.from, data.to);
+    downloadBlob(res.data, `income-statement-${data.from}-to-${data.to}.${format === "pdf" ? "pdf" : "xlsx"}`);
+  };
+
   return (
     <>
       <PageBreadcrumb title="Income Statement" name="Income Statement" breadCrumbItems={["Accounting", "Reports", "Income Statement"]}>
@@ -29,6 +55,15 @@ const IncomeStatement = () => {
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="form-input text-sm" />
           <span className="text-slate-400 text-sm">to</span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="form-input text-sm" />
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={handleExport} disabled={!data}>
+            Export CSV
+          </button>
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => handleExportFile("pdf")} disabled={!data}>
+            Export PDF
+          </button>
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => handleExportFile("excel")} disabled={!data}>
+            Export Excel
+          </button>
         </div>
       </PageBreadcrumb>
 

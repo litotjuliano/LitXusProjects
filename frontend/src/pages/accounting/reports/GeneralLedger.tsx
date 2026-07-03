@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { PageBreadcrumb, ReportLetterhead } from "../../../components";
 import { useCompanyProfile } from "../../../hooks";
-import { getGeneralLedger, type GeneralLedger as GeneralLedgerData } from "../../../helpers/api/reports";
+import { getGeneralLedger, exportGeneralLedger, type GeneralLedger as GeneralLedgerData } from "../../../helpers/api/reports";
 import { listAccounts, type Account } from "../../../helpers/api/accounting";
 import { formatCurrency } from "../../../utils/currency";
+import { downloadCsv } from "../../../utils/csvExport";
+import { downloadBlob } from "../../../utils/fileDownload";
 
 const startOfYear = () => `${new Date().getFullYear()}-01-01`;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -36,6 +38,25 @@ const GeneralLedger = () => {
       .finally(() => setLoading(false));
   }, [accountId, from, to]);
 
+  const handleExport = () => {
+    if (!data) return;
+    const rows: (string | number)[][] = [
+      ["General Ledger", `${data.accountCode} ${data.accountName}`, `${data.from} to ${data.to}`],
+      [],
+      ["Date", "Entry #", "Description", "Debit", "Credit", "Balance"],
+      ...data.lines.map((l) => [l.entryDate, l.entryNumber ?? "", l.description, l.debit, l.credit, l.runningBalance]),
+      [],
+      ["", "", "", "", "Ending Balance", data.endingBalance],
+    ];
+    downloadCsv(`general-ledger-${data.accountCode}-${data.from}-to-${data.to}.csv`, rows);
+  };
+
+  const handleExportFile = async (format: "pdf" | "excel") => {
+    if (!data || !accountId) return;
+    const res = await exportGeneralLedger(format, accountId, data.from, data.to);
+    downloadBlob(res.data, `general-ledger-${data.accountCode}-${data.from}-to-${data.to}.${format === "pdf" ? "pdf" : "xlsx"}`);
+  };
+
   return (
     <>
       <PageBreadcrumb title="General Ledger" name="General Ledger" breadCrumbItems={["Accounting", "Reports", "General Ledger"]}>
@@ -48,6 +69,15 @@ const GeneralLedger = () => {
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="form-input text-sm" />
           <span className="text-slate-400 text-sm">to</span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="form-input text-sm" />
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={handleExport} disabled={!data}>
+            Export CSV
+          </button>
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => handleExportFile("pdf")} disabled={!data}>
+            Export PDF
+          </button>
+          <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => handleExportFile("excel")} disabled={!data}>
+            Export Excel
+          </button>
         </div>
       </PageBreadcrumb>
 

@@ -95,3 +95,7 @@ app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" })).AllowAnonymous();
 
 app.Run();
+
+// Exposes the top-level-statements-generated Program class to LitXus.IntegrationTests'
+// WebApplicationFactory<Program>, which needs a public type to boot the app in-process.
+public partial class Program;
