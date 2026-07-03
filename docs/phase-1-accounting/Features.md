@@ -44,10 +44,10 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 **User story:** As an Accountant, I want to set up and maintain a chart of accounts, so that GL entries have somewhere valid to post to.
 
 **Acceptance criteria:**
-- [ ] Create/edit an account: code, name, type (Asset/Liability/Equity/Revenue/Expense), optional parent account
-- [ ] Account codes are unique
-- [ ] Accounts can be deactivated (not deleted) — deactivated accounts can't be used in new GL entries but remain visible in historical reports
-- [ ] Tree view groups accounts by type and parent/child hierarchy
+- [x] Create an account: code, name, type (Asset/Liability/Equity/Revenue/Expense), optional parent account; edit an existing account's name and/or parent (code and type are immutable once set — by design, not a gap)
+- [x] Account codes are unique
+- [x] Accounts can be deactivated (not deleted) and reactivated — deactivated accounts are excluded from the active-accounts dropdown used when creating new GL entries and hidden from the list by default, but remain visible in historical reports and via "Show inactive accounts"
+- [x] Tree view groups accounts by parent/child hierarchy (indented, parent immediately followed by its children); reparenting into a circular relationship is rejected both client-side (excluded from the dropdown) and server-side (validated)
 
 **Out of scope:** Multi-currency accounts (MYR only in v1.0).
 
@@ -58,11 +58,11 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 **User story:** As an Accountant, I want to create, post, and (if needed) void journal entries, so that the ledger accurately reflects the business.
 
 **Acceptance criteria:**
-- [ ] Create a Draft entry with 2+ lines, each a debit or credit to an active account
-- [ ] Draft entries are editable; Posted entries are not
-- [ ] Posting requires balance (sum debits = sum credits) and updates account running balances
-- [ ] Voiding a Posted entry requires a reason, reverses the account balance impact, and never reuses the entry number
-- [ ] Entry numbers are sequential and gap-free (`JE-2026-000123`)
+- [x] Create a Draft entry with 2+ lines, each a debit or credit to an active account
+- [x] Draft entries are editable (date, description, and lines can all be replaced before posting); Posted entries are not
+- [x] Posting requires balance (sum debits = sum credits) and updates account running balances — UI now shows the exact rejection reason (e.g. unbalanced amount) instead of failing silently
+- [x] Voiding a Posted entry requires a reason (prompted in the UI), reverses the account balance impact, and never reuses the entry number
+- [x] Entry numbers are sequential and gap-free (`JE-2026-000123`)
 
 **Out of scope:** Recurring/template entries, multi-period allocation.
 
@@ -104,7 +104,15 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 - [x] Income Statement (date range) — verified Net Income matches Balance Sheet's Current Year Earnings exactly
 - [x] Balance Sheet (as-of date) — no formal period-close exists yet (see [16 below](#) / Business_Rules.md), so it balances via a computed "Current Year Earnings" line (all-time Revenue − Expense) folded into Equity, the standard small-business-accounting shortcut for this
 - [x] General Ledger detail (per account, date range) — includes a correctly-computed opening balance from activity before the range, and a running balance per line
-- [ ] All reports exportable as PDF, Excel, CSV — **not built**; reports currently only render in the UI, no `/reports/export` endpoint yet
+- [x] CSV export — every report page has an "Export CSV" button that builds the file client-side from
+  the already-fetched report data (no new backend endpoint; the API is Bearer-token-authenticated, not
+  cookie-based, so a plain browser download link couldn't carry the auth header anyway). Verified live
+  against seeded data for all 4 reports.
+- [x] PDF export — a `GET .../pdf` sibling endpoint per report (`AccountingReportsController`) renders the
+  already-fetched DTO via QuestPDF (Community license), with the company letterhead (name, address, SSM/TIN)
+  matching the on-screen `ReportLetterhead`. Verified live: valid `%PDF-1.7` output for all 4 reports.
+- [x] Excel export — a `GET .../excel` sibling endpoint per report renders to `.xlsx` via ClosedXML (MIT
+  license). Verified live: valid OOXML (`PK` zip header) output for all 4 reports.
 
 **Out of scope:** Cash flow statement, budget-vs-actual (v1.1 candidates).
 

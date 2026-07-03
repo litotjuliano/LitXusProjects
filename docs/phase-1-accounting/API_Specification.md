@@ -75,8 +75,25 @@ GET    /accounting/reports/trial-balance      ?asOfDate=          permission: Ac
 GET    /accounting/reports/income-statement   ?from=&to=          permission: Accounting.Reports.Read
 GET    /accounting/reports/balance-sheet      ?asOfDate=          permission: Accounting.Reports.Read
 GET    /accounting/reports/general-ledger     ?accountId=&from=&to=   permission: Accounting.Reports.Read
-GET    /accounting/reports/export             ?report=&format=pdf|excel|csv&...(same filters)   permission: Accounting.Reports.Export
+
+GET    /accounting/reports/trial-balance/pdf        ?asOfDate=              permission: Accounting.Reports.Read
+GET    /accounting/reports/trial-balance/excel      ?asOfDate=              permission: Accounting.Reports.Read
+GET    /accounting/reports/balance-sheet/pdf        ?asOfDate=              permission: Accounting.Reports.Read
+GET    /accounting/reports/balance-sheet/excel      ?asOfDate=              permission: Accounting.Reports.Read
+GET    /accounting/reports/income-statement/pdf     ?from=&to=              permission: Accounting.Reports.Read
+GET    /accounting/reports/income-statement/excel   ?from=&to=              permission: Accounting.Reports.Read
+GET    /accounting/reports/general-ledger/pdf       ?accountId=&from=&to=   permission: Accounting.Reports.Read
+GET    /accounting/reports/general-ledger/excel     ?accountId=&from=&to=   permission: Accounting.Reports.Read
 ```
+
+Each PDF/Excel endpoint re-runs the same query as its JSON sibling, then renders the DTO server-side
+(QuestPDF for PDF, ClosedXML for Excel) and returns the file directly (`Content-Type: application/pdf` /
+`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`) with a `Content-Disposition` filename.
+
+CSV export has no dedicated endpoint: each report page builds the CSV client-side from the JSON already
+returned by the plain query endpoints above (the API is Bearer-token-authenticated, not cookie-based, so
+a plain download link couldn't carry the auth header for a file response either — but for CSV the data is
+already in hand from the page's own JSON fetch, so no extra request is needed at all).
 
 ## Sample Request/Response — GL Entry Creation & Posting
 

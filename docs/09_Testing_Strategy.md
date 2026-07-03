@@ -1,5 +1,28 @@
 # 09 — Testing Strategy
 
+## 9.0 Current Status (Phase 1)
+
+- **`backend/tests/LitXus.UnitTests`** (49 tests, all passing): Domain-layer tests for the highest-risk
+  business logic — `GLEntry` (balance validation, post/void lifecycle, line replacement), `Account`
+  (debit/credit-normal balance math, trial balance column placement), `TaxCode` (SST rounding —
+  half-away-from-zero, not banker's rounding, per [15_Malaysia_Compliance.md](15_Malaysia_Compliance.md)
+  §15.1), `License`, `BankStatementLine`. Plus Application-layer handler tests for the GL entry commands
+  (Create/Post/Void/Update) against a real `AppDbContext` backed by EF Core's **InMemory** provider —
+  this exercises real change-tracking behavior, which is how the `UpdateGLEntryCommandHandler`
+  Added-vs-Modified regression (client-generated GUID PKs misidentified as `Modified`) is now guarded
+  against by a regression test. Also covers `RequirePermissionAttribute` (403 without the claim) and
+  `LicenseKeyVerifier` (accepts a token signed by the matching key, rejects a wrong-keypair signature
+  and an expired token — the exact failure mode that broke license activation earlier in development).
+- **`backend/tests/LitXus.IntegrationTests`** (8 tests, all passing): real HTTP round-trip tests via
+  `WebApplicationFactory<Program>` against the **local SQL Server instance** (not Testcontainers — no
+  Docker daemon is available in this dev environment; see §9.3 for why and what that trades off).
+  Covers 401 without a token, 403 for a Viewer (read-only role) attempting a mutating endpoint, the
+  full Account lifecycle (create → update → deactivate → reactivate) and the full GL Entry lifecycle
+  (create Draft → Post → Void, plus 422 on an unbalanced entry) — all through real controllers, real
+  MediatR handlers, real EF Core migrations, and real RBAC/demo seeding, not mocked.
+- No formal line-coverage measurement has been run yet — the >80% target in §9.1 is aspirational, not
+  currently measured or enforced.
+
 ## 9.1 Unit Testing (.NET)
 
 - **Framework:** xUnit + Moq + FluentAssertions.
@@ -14,9 +37,20 @@
 
 ## 9.3 Integration Testing
 
-- **Framework:** xUnit + `WebApplicationFactory<Program>` + a real (containerized, via Testcontainers) SQL Server instance — not mocked, to catch EF Core query/migration issues mocks would hide.
-- **Scope:** Full HTTP round-trip per endpoint: request → controller → MediatR → handler → DB → response. Covers auth (401 without token, 403 without permission, 403 without licensed module), validation (400 on bad input), and the full CRUD lifecycle per entity.
-- **Location:** `backend/tests/LitXus.IntegrationTests`, one test class per controller.
+- **Framework:** xUnit + `WebApplicationFactory<Program>` + a real SQL Server instance — not mocked, to catch EF Core query/migration issues mocks would hide.
+- **Database:** as originally designed, this should run against a disposable **Testcontainers** SQL
+  Server instance so CI needs nothing pre-installed. In this dev environment Docker isn't available, so
+  `ApiWebApplicationFactory` instead points at the **same local SQL Server instance `scripts/run-dev.bat`
+  already uses**, creating a uniquely-named throwaway database (`LitXusSystems_IntegrationTest_<guid>`)
+  per test run and dropping it on teardown (`IAsyncLifetime.DisposeAsync`) — verified via `sqlcmd` that no
+  test database is left behind after a run. This is a real trade-off, not a strict downgrade: it exercises
+  actual migrations and actual RBAC/demo seeding on every run (Testcontainers tests typically seed a
+  minimal fixed dataset instead, per §9.7), at the cost of requiring a local SQL Server instance rather
+  than working out of the box on any machine with Docker. **If/when Docker becomes available** (e.g. a
+  CI runner), swapping `ApiWebApplicationFactory`'s connection-string source back to a `Testcontainers.MsSql`
+  container is a self-contained change — no test class needs to change, only the fixture.
+- **Scope:** Full HTTP round-trip per endpoint: request → controller → MediatR → handler → DB → response. Currently covers auth (401 without/with a malformed token), permissions (403 for a Viewer attempting a mutating endpoint), and the full CRUD/lifecycle round-trip for Accounts and GL Entries (including the 422 unbalanced-entry business-rule case). Module-gating (403 with a module disabled) and the rest of the CRUD/lifecycle matrix across other entities remain outstanding — not yet written.
+- **Location:** `backend/tests/LitXus.IntegrationTests/Accounting`, one test class per concern (`AuthenticationTests`, `PermissionTests`, `AccountLifecycleTests`, `GLEntryLifecycleTests`).
 
 ## 9.4 Test Scenarios — By Category (applied per module, per phase)
 
@@ -58,8 +92,8 @@
 ## 9.7 Test Data Seeding Strategy for Tests
 
 - Unit tests: in-memory fakes/builders (e.g. `GLEntryBuilder.WithLines(...).Build()`), no database at all.
-- Integration tests: fresh Testcontainers SQL Server instance per test collection, migrated + seeded with a minimal fixed dataset (not the full demo seed — a small, deterministic set so assertions on report totals are exact and don't drift as demo data evolves).
+- Integration tests: fresh database per test run (see §9.3 for the current local-SQL-Server vs. Testcontainers trade-off), migrated and seeded with the **full** RBAC + demo-account + demo-data seed (not a minimal fixed dataset) since `Seeding:Enabled` isn't overridden — this exercises the real seeding pipeline as a side effect, but means tests must not assert on exact report totals (which drift as `AccountingDemoDataSeeder`'s data evolves) — only on entities the test itself creates.
 
 ## 9.8 CI Gate
 
-`.github/workflows/ci.yml` runs on every PR into `develop`/`main`: restore → build → unit tests → integration tests (Testcontainers) → frontend lint/typecheck → frontend unit tests → (Phase 5+) Docker image build smoke test. A PR cannot merge with a red build.
+`.github/workflows/ci.yml` runs on every PR into `develop`/`main`: restore → build → unit tests → integration tests → frontend lint/typecheck → frontend unit tests → (Phase 5+) Docker image build smoke test. A PR cannot merge with a red build. `.github/workflows/ci.yml` doesn't exist yet in this repo (no CI has been set up) — if/when it is, it needs a SQL Server service (Testcontainers if the runner has Docker, else a `mssql` service container) for `LitXus.IntegrationTests` to run against; see §9.3.

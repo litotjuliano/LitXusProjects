@@ -65,14 +65,16 @@ GET    /api/v1/admin/license                         current license + enabled m
 ## 3.5 Accounting Module (Phase 1) — 20+ endpoints
 
 ```
-GET    /api/v1/accounting/accounts                   Chart of Accounts, tree or flat
-POST   /api/v1/accounting/accounts
-PUT    /api/v1/accounting/accounts/{id}
-PATCH  /api/v1/accounting/accounts/{id}/status
+GET    /api/v1/accounting/accounts                   Chart of Accounts, tree or flat (?includeInactive=true to include deactivated)
+POST   /api/v1/accounting/accounts                   optional parentAccountId
+PUT    /api/v1/accounting/accounts/{id}              rename + reparent — code and type are immutable; rejects circular parent/child
+POST   /api/v1/accounting/accounts/{id}/deactivate
+POST   /api/v1/accounting/accounts/{id}/reactivate
 
 GET    /api/v1/accounting/gl-entries                 filter: dateFrom, dateTo, status, accountId
 GET    /api/v1/accounting/gl-entries/{id}
 POST   /api/v1/accounting/gl-entries                  creates Draft entry
+PUT    /api/v1/accounting/gl-entries/{id}             replaces date/description/lines — Draft only
 POST   /api/v1/accounting/gl-entries/{id}/post        Draft -> Posted (validates balanced dr=cr)
 POST   /api/v1/accounting/gl-entries/{id}/void        Posted -> Voided (reason required)
 
@@ -91,8 +93,17 @@ GET    /api/v1/accounting/reports/trial-balance       ?asOfDate=
 GET    /api/v1/accounting/reports/income-statement     ?from=&to=
 GET    /api/v1/accounting/reports/balance-sheet        ?asOfDate=
 GET    /api/v1/accounting/reports/general-ledger       ?accountId=&from=&to=
-GET    /api/v1/accounting/reports/export               ?report=trial-balance&format=pdf|excel|csv
+
+GET    /api/v1/accounting/reports/{report}/pdf         same query params as the JSON endpoint above
+GET    /api/v1/accounting/reports/{report}/excel       same query params as the JSON endpoint above
 ```
+
+`{report}` is one of `trial-balance`, `balance-sheet`, `income-statement`, `general-ledger`. Each pdf/excel
+endpoint re-runs the same query, then renders server-side (QuestPDF / ClosedXML) and streams the file back.
+
+CSV export is client-side (each report page builds the file from the JSON above — no `/export`
+endpoint; the API is Bearer-token, not cookie, authenticated so a plain download link can't carry the
+auth header, and for CSV the data's already in hand from the page's own JSON fetch anyway).
 
 ## 3.6 Sales Module (Phase 2) — 15+ endpoints
 

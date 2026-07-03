@@ -57,6 +57,7 @@ Click **+ New Account**. Fill in:
 | Code | Required, must be unique across all accounts |
 | Name | Required |
 | Type | One of Asset / Liability / Equity / Revenue / Expense — this determines whether the account is debit-normal or credit-normal (see [Business_Rules.md](../06_RBAC_Auth.md)) |
+| Parent Account | Optional. Pick an existing account to nest this one under it — see below. |
 
 ![New Account modal](images/user-guide-03-new-account-modal.png)
 
@@ -69,11 +70,23 @@ appears in the table in code order.
 reason (e.g. *"An account with code '1060' already exists."*) so you can
 correct it and resubmit — nothing is lost.
 
-**Not yet available in the UI:** editing an existing account, deactivating
-an account, and the parent/child tree view. The API supports edit and
-deactivate (`PUT /accounting/accounts/{id}`, `POST
-/accounting/accounts/{id}/deactivate`); a settings page to reach them from
-the UI is still on the backlog.
+The table shows accounts as a **tree** — a child account (one with a Parent
+Account set) is listed immediately under its parent, indented with a `└`
+marker, instead of everywhere sorted flatly by code. Clicking a sortable
+column header (e.g. Balance) still works and simply flattens the view for
+that sort; the tree order is just the default.
+
+Each row also has **Edit** (rename the account and/or change its parent —
+Code and Type can't be changed once created) and **Deactivate**/**Reactivate**.
+A deactivated account is excluded from the active-accounts dropdown
+everywhere else (e.g. when picking an account for a new GL entry line) and
+hidden from the list by default — check **Show inactive accounts** above the
+table to see and reactivate one.
+
+Reparenting an account to one of its own descendants is rejected (*"This
+would create a circular parent/child relationship."*) — the Parent Account
+dropdown itself already excludes them as options, so this mostly guards
+against a stale form submission.
 
 ---
 
@@ -100,19 +113,23 @@ You have two submit options:
 
 | Button | Effect |
 |---|---|
-| **Save as Draft** | Saves the entry as `Draft` even if unbalanced. Editable later (via API — no edit UI yet). Doesn't affect account balances. |
-| **Save & Post** | Disabled until the entry balances. Assigns the next sequential entry number (`JE-2026-NNNNNN`), posts it, and immediately updates account running balances. Posted entries are permanent — no UI edit path. |
+| **Save as Draft** | Saves the entry as `Draft` even if unbalanced. Doesn't affect account balances until posted. |
+| **Save & Post** | Disabled until the entry balances. Assigns the next sequential entry number (`JE-2026-NNNNNN`), posts it, and immediately updates account running balances. |
 
 ![GL Entries list with new posted entry](images/user-guide-06-gl-entries-list.png)
 
 If the save fails server-side (e.g. an inactive account was selected), the
 modal now shows the error inline instead of closing silently.
 
-**Not yet available in the UI:** posting a previously-saved Draft, and
-voiding a Posted entry. Both exist at the API level
-(`POST /accounting/gl-entries/{id}/post`,
-`POST /accounting/gl-entries/{id}/void`) but have no button in this page yet
-— see [Features.md](Features.md) Feature 4 for status.
+A saved **Draft** row shows **Edit** and **Post** buttons. **Edit** reopens
+the same form pre-filled with the entry's current date, description, and
+lines — change anything and click **Save Changes** (or **Save & Post** to
+update and post in one step). **Post** posts the entry as-is (the same
+balance check applies; posting an unbalanced Draft shows the exact reason,
+e.g. *"Entry is unbalanced by RM 50.00 (debit exceeds the other side)."*,
+instead of failing silently). A **Posted** row shows a **Void** button, which
+prompts for a reason before reversing the entry's balance impact. **Voided**
+entries have no further actions — this is a terminal state.
 
 ---
 
@@ -135,6 +152,13 @@ Pick a later "as of" date to include entries you just posted — the example
 above shows account `1060 Trade Deposits` carrying the RM 1,200.00 debit
 from the entry created in Step 4, and the report still balances
 (RM 195,314.00 both sides).
+
+Every report has three export buttons next to its date filters:
+**Export CSV** (downloads exactly what's on screen, opens cleanly in
+Excel/Google Sheets), **Export PDF** (a print-ready copy with your company's
+name, address, SSM and TIN in the header — the same letterhead shown above,
+suitable for sharing with an auditor or bank), and **Export Excel** (an
+`.xlsx` workbook with the same figures, for further analysis).
 
 ---
 
