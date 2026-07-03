@@ -13,15 +13,29 @@
   against by a regression test. Also covers `RequirePermissionAttribute` (403 without the claim) and
   `LicenseKeyVerifier` (accepts a token signed by the matching key, rejects a wrong-keypair signature
   and an expired token — the exact failure mode that broke license activation earlier in development).
-- **`backend/tests/LitXus.IntegrationTests`** (8 tests, all passing): real HTTP round-trip tests via
+- **`backend/tests/LitXus.IntegrationTests`** (9 tests, all passing): real HTTP round-trip tests via
   `WebApplicationFactory<Program>` against the **local SQL Server instance** (not Testcontainers — no
   Docker daemon is available in this dev environment; see §9.3 for why and what that trades off).
-  Covers 401 without a token, 403 for a Viewer (read-only role) attempting a mutating endpoint, the
-  full Account lifecycle (create → update → deactivate → reactivate) and the full GL Entry lifecycle
-  (create Draft → Post → Void, plus 422 on an unbalanced entry) — all through real controllers, real
-  MediatR handlers, real EF Core migrations, and real RBAC/demo seeding, not mocked.
-- No formal line-coverage measurement has been run yet — the >80% target in §9.1 is aspirational, not
-  currently measured or enforced.
+  Covers 401 without/with a malformed token, 403 for a Viewer (read-only role) attempting a mutating
+  endpoint, 403 when the Accounting module itself is un-licensed (`RequireModuleAttribute` — the test
+  temporarily rewrites the seeded license's `EnabledModules` via `License.ApplyVerifiedKey(...)` and
+  restores it afterward, since `IFeatureFlagService` is Scoped and re-reads the Licenses row fresh per
+  request), the full Account lifecycle (create → update → deactivate → reactivate), and the full GL
+  Entry lifecycle (create Draft → Post → Void, plus 422 on an unbalanced entry) — all through real
+  controllers, real MediatR handlers, real EF Core migrations, and real RBAC/demo seeding, not mocked.
+- **Line coverage measured** (`dotnet test --collect:"XPlat Code Coverage"` + `reportgenerator`, both
+  test projects combined): **81.3%** overall (6,196 / 7,618 coverable lines) — meets the >80% target in
+  §9.1 in aggregate, but that number is inflated by EF Core migration files sitting at ~97-100% just from
+  booting the app (not meaningfully "tested" logic). By module: `LitXus.Domain` 90.4%, `LitXus.Infrastructure`
+  91% (both genuinely well-covered), `LitXus.Api` 46.5%, `LitXus.Application` 31.7% (the two layers holding
+  most of the untested surface). The **real gaps**, not covered by any test yet: all 4 report query handlers
+  (`GetTrialBalance`/`GetBalanceSheet`/`GetIncomeStatement`/`GetGeneralLedger`, 0%), both report exporters
+  (`QuestPdfReportExporter`/`ClosedXmlReportExporter`, 0% — verified live via Playwright this session, §9.6
+  style, but not by an automated test), and essentially all of Identity/Company/Licensing/Admin (0% —
+  outside this session's Accounting-focused scope). Re-run the command above (needs the
+  `dotnet-reportgenerator-globaltool` global tool) to regenerate a fresh module-by-module breakdown —
+  no coverage report is committed to the repo, since it's a point-in-time measurement that goes stale
+  immediately.
 
 ## 9.1 Unit Testing (.NET)
 
