@@ -7,9 +7,10 @@ using Microsoft.EntityFrameworkCore;
 namespace LitXus.Infrastructure.Seeding;
 
 /// <summary>
-/// Seeds two demo accounts so a fresh local/demo install has something to log in with.
-/// Password is a fixed dev-only value — see docs/08_Sample_Data.md §8.2 for the pattern this
-/// follows (never seeded when Seeding:Enabled is false, i.e. never in Production).
+/// Seeds one demo account per role (all 7) so a fresh local/demo install has a ready-to-use login
+/// for every tier without going through the admin-driven Create User flow first. Password is a
+/// fixed dev-only value — see docs/08_Sample_Data.md §8.2 for the pattern this follows (never
+/// seeded when Seeding:Enabled is false, i.e. never in Production).
 /// </summary>
 public class UserSeeder(IAppDbContext db, UserManager<AppUser> userManager) : ISeeder
 {
@@ -26,6 +27,11 @@ public class UserSeeder(IAppDbContext db, UserManager<AppUser> userManager) : IS
 
         await CreateUserAsync("superadmin@litxus.demo", "Super Admin Demo", "Super Admin", cancellationToken);
         await CreateUserAsync("admin@litxus.demo", "Admin Demo", "Admin", cancellationToken);
+        await CreateUserAsync("accountant@litxus.demo", "Accountant Demo", "Accountant", cancellationToken);
+        await CreateUserAsync("salesuser@litxus.demo", "Sales User Demo", "SalesUser", cancellationToken);
+        await CreateUserAsync("inventorymanager@litxus.demo", "Inventory Manager Demo", "InventoryManager", cancellationToken);
+        await CreateUserAsync("manager@litxus.demo", "Manager Demo", "Manager", cancellationToken);
+        await CreateUserAsync("viewer@litxus.demo", "Viewer Demo", "Viewer", cancellationToken);
     }
 
     private async Task CreateUserAsync(string email, string fullName, string roleName, CancellationToken cancellationToken)

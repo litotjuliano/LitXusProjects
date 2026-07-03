@@ -44,6 +44,10 @@ function listUsers() {
   return api.get("/admin/users", null);
 }
 
+function createUser(email: string, fullName: string, password: string, roleId: string) {
+  return api.create("/admin/users", { email, fullName, password, roleId });
+}
+
 function updateUserStatus(id: string, isActive: boolean) {
   return api.updatePatch(`/admin/users/${id}/status`, { isActive });
 }
@@ -68,4 +72,4 @@ function listAuditLogs() {
   return api.get("/admin/audit-logs", null);
 }
 
-export { listUsers, updateUserStatus, assignRole, revokeRole, listRoles, listPermissions, listAuditLogs };
+export { listUsers, createUser, updateUserStatus, assignRole, revokeRole, listRoles, listPermissions, listAuditLogs };

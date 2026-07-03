@@ -1,5 +1,6 @@
 using LitXus.Api.Filters;
 using LitXus.Application.Modules.Identity.Commands.AssignRole;
+using LitXus.Application.Modules.Identity.Commands.CreateUser;
 using LitXus.Application.Modules.Identity.Commands.RevokeRole;
 using LitXus.Application.Modules.Identity.Commands.UpdateUserStatus;
 using LitXus.Application.Modules.Identity.Queries.GetUsers;
@@ -11,6 +12,7 @@ namespace LitXus.Api.Controllers;
 
 public record UpdateUserStatusRequest(bool IsActive);
 public record AssignRoleRequest(Guid RoleId);
+public record CreateUserRequest(string Email, string FullName, string Password, Guid RoleId);
 
 [ApiController]
 [Authorize]
@@ -23,6 +25,14 @@ public class AdminUsersController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new GetUsersQuery());
         return Ok(new { data = result, meta = (object?)null });
+    }
+
+    [HttpPost]
+    [RequirePermission("Admin.Users.Update")]
+    public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
+    {
+        var result = await mediator.Send(new CreateUserCommand(request.Email, request.FullName, request.Password, request.RoleId));
+        return StatusCode(StatusCodes.Status201Created, new { data = result, meta = (object?)null });
     }
 
     [HttpPatch("{id:guid}/status")]

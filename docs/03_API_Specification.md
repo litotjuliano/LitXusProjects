@@ -34,7 +34,7 @@ Base URL: `/api/v1`. All endpoints (except `/auth/*`) require `Authorization: Be
 ## 3.3 Authentication Endpoints
 
 ```
-POST   /api/v1/auth/register          4-step registration (creates Pending user)
+POST   /api/v1/auth/register          bootstrap-only: succeeds once, for the very first user on a fresh install (auto-granted Super Admin); rejected for every call after that — see 3.4, user creation is Admin-driven from here on
 POST   /api/v1/auth/login             { email, password } -> { accessToken, refreshToken, expiresIn, user }
 POST   /api/v1/auth/refresh           { refreshToken } -> new token pair (rotates refresh token)
 POST   /api/v1/auth/logout            revokes refresh token
@@ -47,11 +47,12 @@ GET    /api/v1/auth/me                current user + roles + permissions + enabl
 
 ```
 GET    /api/v1/admin/users                          list, filter by role/status
+POST   /api/v1/admin/users                          create a user (email, fullName, password, roleId) — active immediately, no Pending state; rejects roleId="Super Admin"
 GET    /api/v1/admin/users/{id}
 PUT    /api/v1/admin/users/{id}                      edit profile
 PATCH  /api/v1/admin/users/{id}/status               activate/deactivate
-POST   /api/v1/admin/users/{id}/roles                assign role(s)
-DELETE /api/v1/admin/users/{id}/roles/{roleId}
+POST   /api/v1/admin/users/{id}/roles                assign role
+DELETE /api/v1/admin/users/{id}/roles/{roleId}        revoke role
 GET    /api/v1/admin/roles
 POST   /api/v1/admin/roles
 PUT    /api/v1/admin/roles/{id}

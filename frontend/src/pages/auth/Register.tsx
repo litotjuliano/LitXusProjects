@@ -66,8 +66,8 @@ const Register = () => {
     <>
       <PageBreadcrumb title='Register' />
       <AuthLayout
-        authTitle='Sign Up'
-        helpText="Don't have an account? Create your account, it takes less than a minute"
+        authTitle='Initial Setup'
+        helpText="This creates the very first account on a fresh install, which becomes Super Admin automatically. It only works once — every other user is created by an Admin from Administration → Users."
         bottomLinks={<BottomLink />}
       >
         <VerticalForm<UserData>

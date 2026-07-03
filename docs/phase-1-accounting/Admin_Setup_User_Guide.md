@@ -5,25 +5,38 @@ the parts of Phase 1 that aren't Accounting itself but that a real deployment
 needs before Accounting is usable. See [User_Guide.md](User_Guide.md) for the
 Accounting workflow (Chart of Accounts, GL Entries, Reports).
 
-**Note on sample data:** `UserSeeder` only creates two accounts
-(`superadmin@litxus.demo`, `admin@litxus.demo`) so a fresh install has
-something to log in with — it does not seed a regular "User"-tier account.
-This guide creates one for real, by hand, the same way you'd do it for an
-actual employee, rather than relying on seed data as a stand-in.
+**Note on sample data — this differs between dev and production:**
+`UserSeeder` is demo-only (gated by `Seeding:Enabled`, off by default in
+Production) and creates **one account per role — all 7** (`superadmin@litxus.demo`,
+`admin@litxus.demo`, `accountant@litxus.demo`, `salesuser@litxus.demo`,
+`inventorymanager@litxus.demo`, `manager@litxus.demo`, `viewer@litxus.demo`,
+all password `Demo@12345`) purely so a **local dev/demo** install has a
+ready-to-use login for every tier — it never runs in a real production
+install. A real production install seeds **nothing**: the very first person
+to hit `/auth/register` is automatically activated as Super Admin, and every
+call after that is rejected (see [10_Deployment.md](../10_Deployment.md)
+§10.3a) — from then on, every account is created directly by an Admin/Super
+Admin via the UI (Section 3 below), active immediately, no separate
+activation step.
 
 ---
 
 ## 1. The Three Tiers
 
-| Tier | Seeded account | What they can do |
-|---|---|---|
-| **Super Admin** | `superadmin@litxus.demo` | Everything, including License management. Install owner only. |
-| **Admin** | `admin@litxus.demo` | Everything except License management — users, roles (view), company profile, audit logs, all Accounting. |
-| **User** (e.g. Accountant) | *not seeded — created below* | Whatever their assigned role grants. No access to Administration pages. |
+| Tier | Seeded in dev/demo | In a real production install | What they can do |
+|---|---|---|---|
+| **Super Admin** | `superadmin@litxus.demo` | Not seeded — the first `/auth/register` account becomes Super Admin automatically | Everything, including License management. Install owner only. |
+| **Admin** | `admin@litxus.demo` | Not seeded — created by the Super Admin, same as Section 3 | Everything except License management — users, roles, company profile, audit logs, all Accounting. |
+| **User** (e.g. Accountant, Manager, Viewer) | `accountant@litxus.demo` and 4 others | Not seeded — created by an Admin/Super Admin, same as Section 3 | Whatever their assigned role grants. No access to Administration pages. |
 
 There are 7 fixed roles total (`Super Admin`, `Admin`, `Accountant`, `SalesUser`,
 `InventoryManager`, `Manager`, `Viewer`) — see Section 6. Custom role creation
 isn't built yet.
+
+In dev, the Login page lists all 7 demo accounts and fills the form for you
+on click:
+
+![Login page demo accounts](images/admin-guide-09-login-demo-accounts.png)
 
 ---
 
@@ -45,39 +58,34 @@ user — no restart needed.
 
 ---
 
-## 3. Admin: Onboarding a New User
+## 3. Admin: Creating a New User
 
 Log in as `admin@litxus.demo` / `Demo@12345` for the rest of this section.
+There is no self-registration step to walk through anymore — `/auth/register`
+only ever works once, for the very first account on a fresh install (Section
+1). Every account after that is created directly by an Admin/Super Admin.
 
-### Step 1 — the new person self-registers
+### Create the account
 
-There's no "create user" button for an Admin to click — a new account comes
-from the person themselves visiting `/auth/register` and signing up (Full
-Name, Email, Password). Once the system already has at least one user (which
-it does, from seeding), a self-registered account starts **Pending**
-(`isActive: false`) and has **no role** until an Admin acts on it.
+Go to **Administration → Users** and click **+ New User**. Fill in Full Name,
+Email, an initial Password, and pick a Role — Super Admin is never offered
+here, only the 6 assignable roles.
 
-### Step 2 — Admin activates the account
+![New User modal](images/admin-guide-10-new-user-modal.png)
 
-Go to **Administration → Users**. The new account appears with status
-`Inactive`. Click **Activate**.
+Click **Create User**. The account is **Active immediately** with the chosen
+role already assigned — no Pending state, no separate activation or
+role-assignment step. They can log in right away with the password you set.
 
-![Users list after activation](images/admin-guide-03-users-list-activated.png)
+![Users list after creating a new account](images/admin-guide-11-users-list-after-create.png)
 
-### Step 3 — Admin assigns a role
+### Change an existing user's role
 
-**Not yet available in the UI.** The Users page has no "Assign Role" button,
-and the Roles & Permissions page is read-only (Section 6) — role assignment
-only exists at the API level today
-(`POST /api/v1/admin/users/{id}/roles`, body `{"roleId": "<role-guid>"}`,
-requires `Admin.Users.Update`). Get the target role's GUID from
-`GET /api/v1/admin/roles`, then call the assign endpoint with the new user's
-ID. Until this happens, an activated user can log in but every action will be
-rejected with 403 (no permissions).
+Each row's **Role** column is a dropdown, not read-only text — pick a
+different role and it takes effect immediately (the old role is revoked and
+the new one assigned in one action).
 
-This example assigns the `Accountant` role — `GL entries, tax, reports` (14
-permissions) — a realistic User-tier role for someone doing day-to-day
-bookkeeping.
+![Role changed via the per-row dropdown](images/admin-guide-12-role-changed.png)
 
 ---
 
@@ -100,14 +108,15 @@ email, phone) — click **+ Add Signatory**.
 ## 5. Admin: Reviewing Audit Logs
 
 Go to **Administration → Audit Logs**. Every Create/Update/Delete — and
-semantic actions like `AssignRole` and `Activate` — is captured automatically
-with who, when, and (for updates) a before/after diff.
+semantic actions like `Create` (a new user), `AssignRole`, and `RevokeRole` —
+is captured automatically with who, when, and (for updates) a before/after
+diff.
 
-![Audit Logs](images/admin-guide-05-audit-logs.png)
+![Audit Logs](images/admin-guide-13-audit-logs-after.png)
 
-The two most recent rows above are literally the `Activate` and `AssignRole`
-actions from Section 3, performed moments earlier — this page isn't sample
-data, it's a live record of what an Admin actually did.
+The top rows above are literally the account-creation and role-change actions
+from Section 3, performed moments earlier — this page isn't sample data, it's
+a live record of what an Admin actually did.
 
 ---
 
@@ -127,9 +136,9 @@ reference only in Phase 1.
 
 ## 7. User Tier: Logging In With Restricted Access
 
-Log in as the newly-created account (`accountant@litxus.demo` in this
-example) — `Demo@12345`. The sidebar reflects exactly what the `Accountant`
-role grants: Accounting pages only, **no Administration section at all**.
+Log in as any User-tier account (`accountant@litxus.demo` in this example) —
+`Demo@12345`. The sidebar reflects exactly what the `Accountant` role grants:
+Accounting pages only, **no Administration section at all**.
 
 ![Accountant's restricted sidebar](images/admin-guide-07-accountant-dashboard-sidebar.png)
 
@@ -144,7 +153,8 @@ definitions isn't actually consulted by the router.
 
 ## Not Yet Built
 
-- **Assign/revoke role UI** — API-only today (Section 3). A settings screen
-  is the natural next step.
 - **Custom roles** — the 7 roles are fixed; no UI or API to create new ones.
-- **Bulk user invite** — onboarding is one self-registration at a time.
+- **Bulk user invite** — onboarding is one account at a time.
+- **Email-based invites** — the Admin sets the initial password directly and
+  shares it out-of-band; there's no email infrastructure yet to send a
+  set-your-own-password link instead.

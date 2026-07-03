@@ -1,9 +1,31 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
-import { PageBreadcrumb, DataTable, type DataTableColumn } from "../../components";
-import { listUsers, updateUserStatus, type UserSummary } from "../../helpers/api/admin";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { PageBreadcrumb, DataTable, FormInput, VerticalForm, type DataTableColumn } from "../../components";
+import ModalLayout from "../../components/HeadlessUI/ModalLayout";
+import {
+  listUsers,
+  createUser,
+  updateUserStatus,
+  assignRole,
+  revokeRole,
+  listRoles,
+  type UserSummary,
+  type Role,
+} from "../../helpers/api/admin";
 import { RootState } from "../../redux/store";
+
+interface NewUserFormValues {
+  fullName: string;
+  email: string;
+  password: string;
+  roleId: string;
+}
+
+const fieldClass = "form-input w-full";
+const labelClass = "block text-sm font-medium text-gray-600 dark:text-gray-200 mb-2";
 
 const Users = () => {
   const currentUser = useSelector((state: RootState) => state.Auth.user as any);
@@ -13,8 +35,13 @@ const Users = () => {
   const isAdminOrSuperAdmin = (currentUser?.roles ?? []).some((r: string) => r === "Admin" || r === "Super Admin");
 
   const [users, setUsers] = useState<UserSummary[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [roleChangingId, setRoleChangingId] = useState<string | null>(null);
+
+  const [showNewUserModal, setShowNewUserModal] = useState(false);
+  const [newUserError, setNewUserError] = useState<string | null>(null);
 
   const fetchUsers = () => {
     setLoading(true);
@@ -24,7 +51,18 @@ const Users = () => {
       .finally(() => setLoading(false));
   };
 
-  useEffect(fetchUsers, []);
+  const fetchRoles = () => {
+    listRoles()
+      .then((res) => setRoles(res.data?.data ?? []))
+      .catch(() => setRoles([]));
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    fetchRoles();
+  }, []);
+
+  const roleIdByName = (name: string) => roles.find((r) => r.name === name)?.id;
 
   const toggleStatus = async (user: UserSummary) => {
     setBusyId(user.id);
@@ -33,6 +71,43 @@ const Users = () => {
       await fetchUsers();
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const changeRole = async (user: UserSummary, newRoleId: string) => {
+    setRoleChangingId(user.id);
+    try {
+      const currentRoleName = user.roles[0];
+      const currentRoleId = currentRoleName ? roleIdByName(currentRoleName) : undefined;
+      if (currentRoleId) {
+        await revokeRole(user.id, currentRoleId);
+      }
+      if (newRoleId) {
+        await assignRole(user.id, newRoleId);
+      }
+      await fetchUsers();
+    } finally {
+      setRoleChangingId(null);
+    }
+  };
+
+  const newUserSchemaResolver = yupResolver<NewUserFormValues>(
+    yup.object().shape({
+      fullName: yup.string().required("Please enter a full name"),
+      email: yup.string().email("Must be a valid email").required("Please enter an email"),
+      password: yup.string().min(10, "Must be at least 10 characters").required("Please enter a password"),
+      roleId: yup.string().required("Please select a role"),
+    })
+  );
+
+  const onCreateUser = async (values: NewUserFormValues) => {
+    setNewUserError(null);
+    try {
+      await createUser(values.email, values.fullName, values.password, values.roleId);
+      setShowNewUserModal(false);
+      await fetchUsers();
+    } catch (err) {
+      setNewUserError(typeof err === "string" ? err : "Could not create the user. Please try again.");
     }
   };
 
@@ -46,15 +121,21 @@ const Users = () => {
     },
     {
       key: "roles",
-      header: "Roles",
+      header: "Role",
       render: (u) => (
-        <div className="flex flex-wrap gap-1">
-          {u.roles.length === 0 && <span className="text-slate-400">—</span>}
-          {u.roles.map((r) => (
-            <span key={r} className="rounded bg-slate-100 dark:bg-slate-700 px-2 py-0.5 text-xs">{r}</span>
+        <select
+          className="form-select text-xs py-1"
+          value={roleIdByName(u.roles[0] ?? "") ?? ""}
+          disabled={roleChangingId === u.id}
+          onChange={(e) => changeRole(u, e.target.value)}
+        >
+          <option value="">No role</option>
+          {roles.map((r) => (
+            <option key={r.id} value={r.id}>{r.name}</option>
           ))}
-        </div>
+        </select>
       ),
+      sortAccessor: (u) => u.roles[0] ?? "",
     },
     {
       key: "lastLogin",
@@ -99,6 +180,16 @@ const Users = () => {
   return (
     <>
       <PageBreadcrumb title="Users" name="Users" breadCrumbItems={["Administration", "Users"]} />
+
+      <div className="flex justify-end mb-3">
+        <button
+          className="btn text-white bg-primary text-sm"
+          onClick={() => { setNewUserError(null); setShowNewUserModal(true); }}
+        >
+          + New User
+        </button>
+      </div>
+
       <DataTable<UserSummary>
         columns={columns}
         data={users}
@@ -108,6 +199,30 @@ const Users = () => {
         searchPlaceholder="Search by name or email…"
         searchAccessor={(u) => `${u.fullName} ${u.email}`}
       />
+
+      <ModalLayout showModal={showNewUserModal} toggleModal={() => setShowNewUserModal(false)} panelClassName="w-full max-w-lg bg-white dark:bg-slate-800 p-6">
+        <h5 className="text-lg font-medium text-slate-900 dark:text-slate-200 mb-4">New User</h5>
+        <VerticalForm<NewUserFormValues> onSubmit={onCreateUser} resolver={newUserSchemaResolver}>
+          <FormInput label="Full Name" type="text" name="fullName" containerClass="mb-4" className={fieldClass} labelClassName={labelClass} />
+          <FormInput label="Email" type="text" name="email" containerClass="mb-4" className={fieldClass} labelClassName={labelClass} />
+          <FormInput label="Password" type="password" name="password" containerClass="mb-4" className={fieldClass} labelClassName={labelClass} />
+          <FormInput label="Role" type="select" name="roleId" containerClass="mb-4" className="form-select" labelClassName={labelClass}>
+            <option value="">Select a role…</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </FormInput>
+          <div className="text-sm text-red-600 mb-3">{newUserError}</div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => setShowNewUserModal(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn text-white bg-primary text-sm">
+              Create User
+            </button>
+          </div>
+        </VerticalForm>
+      </ModalLayout>
     </>
   );
 };

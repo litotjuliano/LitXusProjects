@@ -4,16 +4,19 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 
 ---
 
-## Feature 1: User Registration & Login
+## Feature 1: Account Bootstrap, Admin-Driven User Creation & Login
 **Priority:** Must-have
-**User story:** As a new customer admin, I want to register my company and log in, so that I can start using the system.
+**User story:** As the owner of a fresh install, I want the very first account I create to have full authority, and as an Admin, I want to create accounts for my staff directly, so nobody has to self-register or wait for a separate activation step.
 
-**Description:** Standard email/password registration and login using ASP.NET Identity + JWT. New registrations are created `Pending` and require an existing Admin to activate them (bootstrap: the very first user in a fresh install is auto-activated as Admin — see Business_Rules.md).
+**Description:** Email/password login using ASP.NET Identity + JWT. Self-registration (`POST /auth/register`) is bootstrap-only — it works exactly once, for the very first user on a fresh install, auto-activated and granted **Super Admin** (see Business_Rules.md). Every account after that is created directly by an Admin/Super Admin via **Administration → Users → + New User** (name, email, password, role in one step) — active immediately, no Pending state.
 
 **Acceptance criteria:**
-- [ ] Register with email, password, full name creates a `Pending` user
-- [ ] Login rejects `Pending`/deactivated users with a clear message
-- [ ] Successful login returns access + refresh token pair and `GET /auth/me` payload (roles, permissions, enabled modules)
+- [x] First-ever registration on a fresh install creates an active Super Admin account
+- [x] Any later call to `/auth/register` is rejected
+- [x] Admin/Super Admin can create a new user (name, email, password, role) in one step via the UI, active immediately
+- [x] Role can be changed for an existing user via a dropdown on the Users page (calls the existing assign/revoke endpoints)
+- [ ] Login rejects deactivated users with a clear message
+- [x] Successful login returns access + refresh token pair and `GET /auth/me` payload (roles, permissions, enabled modules)
 - [ ] Refresh token rotates on use; logout revokes it
 - [ ] Password reset flow (request + confirm) works end-to-end
 

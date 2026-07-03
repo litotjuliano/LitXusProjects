@@ -1,10 +1,10 @@
 # Phase 1 — Business Rules
 
-## Rule: First user in a fresh install is auto-activated as Admin
-**Statement:** If `AspNetUsers` is empty when `/auth/register` is called, the new user is created `IsActive=true` and auto-assigned the Admin role. Every subsequent registration is `Pending` and requires an existing Admin to activate it.
-**Enforced at:** `RegisterCommandHandler` (Application layer), checked via `_db.Users.AnyAsync()` before creation.
-**Violation behavior:** N/A (this is a bootstrap convenience, not a rejectable action).
-**Example:** Fresh install, first `POST /auth/register` → user is immediately usable. Second registration → `Pending`, invisible to login until an Admin calls `PATCH /admin/users/{id}/status`.
+## Rule: Self-registration is bootstrap-only — first user becomes Super Admin, every call after that is rejected
+**Statement:** If `AspNetUsers` is empty when `/auth/register` is called, the new user is created `IsActive=true` and auto-assigned the **Super Admin** role — they're the literal install owner and need license authority immediately (a production install has no seeded accounts at all, and no other account could grant them Super Admin afterward, since self-escalation is deliberately blocked). Every subsequent call to `/auth/register` is rejected outright — there is no Pending/self-service path anymore. All other users are created directly by an Admin/Super Admin via `POST /api/v1/admin/users` (see `docs/phase-1-accounting/Admin_Setup_User_Guide.md` §3), active immediately with a role already assigned, no separate activation step.
+**Enforced at:** `IdentityService.RegisterAsync` (Infrastructure layer — auth is a direct service, not a MediatR command), checked via `userManager.Users.AnyAsync()` before creation.
+**Violation behavior:** A second (or later) call to `/auth/register` throws `AuthenticationException("Self-registration is disabled. Ask an administrator to create your account.")`, surfaced as 400.
+**Example:** Fresh install, first `POST /auth/register` → user is immediately usable as Super Admin. Second call to `POST /auth/register` (by anyone, at any time after) → rejected. An Admin instead calls `POST /admin/users` with the new person's details and a role — that account is active and role-assigned immediately.
 
 ## Rule: GL entries must balance to post
 **Statement:** Sum of `DebitAmount` across all lines must equal sum of `CreditAmount` before a GL entry can transition Draft → Posted.

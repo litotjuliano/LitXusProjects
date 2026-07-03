@@ -12,4 +12,12 @@ public interface IIdentityUserService
     Task<IReadOnlyList<UserSummaryDto>> GetUsersAsync(CancellationToken cancellationToken);
     Task SetUserActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken);
     Task<string?> GetUserEmailAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Creates a new user, active immediately (no Pending state — the caller, an Admin/Super
+    /// Admin, is the vouching step; there's no self-registration approval left to gate on).
+    /// Throws ValidationException (Identity's CreateAsync errors — duplicate email, weak
+    /// password) or ForbiddenException (roleId resolves to "Super Admin").
+    /// </summary>
+    Task<UserSummaryDto> CreateUserAsync(string email, string fullName, string password, Guid roleId, CancellationToken cancellationToken);
 }

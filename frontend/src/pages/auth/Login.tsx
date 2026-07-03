@@ -24,6 +24,11 @@ interface UserData {
 const DEMO_ACCOUNTS = [
   { role: "Super Admin", email: "superadmin@litxus.demo", password: "Demo@12345" },
   { role: "Admin", email: "admin@litxus.demo", password: "Demo@12345" },
+  { role: "Accountant", email: "accountant@litxus.demo", password: "Demo@12345" },
+  { role: "SalesUser", email: "salesuser@litxus.demo", password: "Demo@12345" },
+  { role: "InventoryManager", email: "inventorymanager@litxus.demo", password: "Demo@12345" },
+  { role: "Manager", email: "manager@litxus.demo", password: "Demo@12345" },
+  { role: "Viewer", email: "viewer@litxus.demo", password: "Demo@12345" },
 ];
 
 const Login = () => {

@@ -25,16 +25,29 @@ public class IdentityService(
     private const string RefreshTokenProvider = "LitXus";
     private const string RefreshTokenName = "RefreshToken";
 
+    /// <summary>
+    /// Self-registration is bootstrap-only: it works exactly once, for the very first user on a
+    /// fresh install (including a fresh production install, where nothing is seeded — see
+    /// RbacSeeder.AlwaysRun), who is auto-activated as Super Admin — they're the literal install
+    /// owner and need license authority immediately, and no other account could grant them Super
+    /// Admin afterward (self-escalation is deliberately blocked). Every user after that is created
+    /// by an Admin/Super Admin directly (CreateUserCommand), not by self-registering — this method
+    /// rejects the call once any user already exists.
+    /// </summary>
     public async Task<AppUser> RegisterAsync(string email, string password, string fullName)
     {
         var isFirstUser = !await userManager.Users.AnyAsync();
+        if (!isFirstUser)
+        {
+            throw new AuthenticationException("Self-registration is disabled. Ask an administrator to create your account.");
+        }
 
         var user = new AppUser
         {
             UserName = email,
             Email = email,
             FullName = fullName,
-            IsActive = isFirstUser,
+            IsActive = true,
         };
 
         var result = await userManager.CreateAsync(user, password);
@@ -43,14 +56,11 @@ public class IdentityService(
             throw new AuthenticationException(string.Join(" ", result.Errors.Select(e => e.Description)));
         }
 
-        if (isFirstUser)
+        var superAdminRole = await db.AppRoles.FirstOrDefaultAsync(r => r.Name == "Super Admin");
+        if (superAdminRole is not null)
         {
-            var adminRole = await db.AppRoles.FirstOrDefaultAsync(r => r.Name == "Admin");
-            if (adminRole is not null)
-            {
-                db.AppUserRoles.Add(UserRole.Create(user.Id, adminRole.Id));
-                await db.SaveChangesAsync(CancellationToken.None);
-            }
+            db.AppUserRoles.Add(UserRole.Create(user.Id, superAdminRole.Id));
+            await db.SaveChangesAsync(CancellationToken.None);
         }
 
         return user;
