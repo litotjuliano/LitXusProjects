@@ -11,6 +11,7 @@ import {
   updateUserStatus,
   assignRole,
   revokeRole,
+  resetUserPassword,
   listRoles,
   type UserSummary,
   type Role,
@@ -22,6 +23,10 @@ interface NewUserFormValues {
   email: string;
   password: string;
   roleId: string;
+}
+
+interface ResetPasswordFormValues {
+  newPassword: string;
 }
 
 const fieldClass = "form-input w-full";
@@ -42,6 +47,9 @@ const Users = () => {
 
   const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [newUserError, setNewUserError] = useState<string | null>(null);
+
+  const [resetPasswordUser, setResetPasswordUser] = useState<UserSummary | null>(null);
+  const [resetPasswordError, setResetPasswordError] = useState<string | null>(null);
 
   const fetchUsers = () => {
     setLoading(true);
@@ -111,6 +119,23 @@ const Users = () => {
     }
   };
 
+  const resetPasswordSchemaResolver = yupResolver<ResetPasswordFormValues>(
+    yup.object().shape({
+      newPassword: yup.string().min(10, "Must be at least 10 characters").required("Please enter a new password"),
+    })
+  );
+
+  const onResetPassword = async (values: ResetPasswordFormValues) => {
+    if (!resetPasswordUser) return;
+    setResetPasswordError(null);
+    try {
+      await resetUserPassword(resetPasswordUser.id, values.newPassword);
+      setResetPasswordUser(null);
+    } catch (err) {
+      setResetPasswordError(typeof err === "string" ? err : "Could not reset the password. Please try again.");
+    }
+  };
+
   const columns: DataTableColumn<UserSummary>[] = [
     { key: "fullName", header: "Name", render: (u) => u.fullName, sortAccessor: (u) => u.fullName },
     {
@@ -162,13 +187,21 @@ const Users = () => {
       header: "",
       className: "text-right",
       render: (u) => (
-        <button
-          onClick={() => toggleStatus(u)}
-          disabled={busyId === u.id}
-          className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
-        >
-          {u.isActive ? "Deactivate" : "Activate"}
-        </button>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => { setResetPasswordError(null); setResetPasswordUser(u); }}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Reset Password
+          </button>
+          <button
+            onClick={() => toggleStatus(u)}
+            disabled={busyId === u.id}
+            className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+          >
+            {u.isActive ? "Deactivate" : "Activate"}
+          </button>
+        </div>
       ),
     },
   ];
@@ -222,6 +255,28 @@ const Users = () => {
             </button>
           </div>
         </VerticalForm>
+      </ModalLayout>
+
+      <ModalLayout showModal={resetPasswordUser !== null} toggleModal={() => setResetPasswordUser(null)} panelClassName="w-full max-w-lg bg-white dark:bg-slate-800 p-6">
+        <h5 className="text-lg font-medium text-slate-900 dark:text-slate-200 mb-4">Reset Password</h5>
+        {resetPasswordUser && (
+          <VerticalForm<ResetPasswordFormValues> key={resetPasswordUser.id} onSubmit={onResetPassword} resolver={resetPasswordSchemaResolver}>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              Set a new password for <span className="font-medium">{resetPasswordUser.fullName}</span> ({resetPasswordUser.email}).
+              Share it with them directly — there's no email delivery yet.
+            </p>
+            <FormInput label="New Password" type="password" name="newPassword" containerClass="mb-4" className={fieldClass} labelClassName={labelClass} />
+            <div className="text-sm text-red-600 mb-3">{resetPasswordError}</div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={() => setResetPasswordUser(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn text-white bg-primary text-sm">
+                Reset Password
+              </button>
+            </div>
+          </VerticalForm>
+        )}
       </ModalLayout>
     </>
   );

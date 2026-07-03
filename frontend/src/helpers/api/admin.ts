@@ -60,6 +60,10 @@ function revokeRole(userId: string, roleId: string) {
   return api.delete(`/admin/users/${userId}/roles/${roleId}`);
 }
 
+function resetUserPassword(id: string, newPassword: string) {
+  return api.create(`/admin/users/${id}/reset-password`, { newPassword });
+}
+
 function listRoles() {
   return api.get("/admin/roles", null);
 }
@@ -72,4 +76,4 @@ function listAuditLogs() {
   return api.get("/admin/audit-logs", null);
 }
 
-export { listUsers, createUser, updateUserStatus, assignRole, revokeRole, listRoles, listPermissions, listAuditLogs };
+export { listUsers, createUser, updateUserStatus, assignRole, revokeRole, resetUserPassword, listRoles, listPermissions, listAuditLogs };

@@ -20,4 +20,14 @@ public interface IIdentityUserService
     /// password) or ForbiddenException (roleId resolves to "Super Admin").
     /// </summary>
     Task<UserSummaryDto> CreateUserAsync(string email, string fullName, string password, Guid roleId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Admin-initiated only — there's no self-service "forgot password" flow, since that would
+    /// require emailing a reset token to an anonymous caller with no email infrastructure in this
+    /// project (see docs/06_RBAC_Auth.md). Generates and consumes an Identity password-reset token
+    /// server-side in one call, so no token ever leaves the server. Throws NotFoundException,
+    /// ForbiddenException (target user has the Super Admin role), or ValidationException
+    /// (Identity's password-policy errors).
+    /// </summary>
+    Task ResetUserPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken);
 }

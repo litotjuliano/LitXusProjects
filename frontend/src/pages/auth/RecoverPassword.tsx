@@ -1,90 +1,35 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { yupResolver } from '@hookform/resolvers/yup'
-import * as yup from "yup";
 
 // components
-import { FormInput, VerticalForm, AuthLayout, PageBreadcrumb } from '../../components'
-
-// redux
-import { useSelector,useDispatch } from 'react-redux'
-import { AppDispatch, RootState } from '../../redux/store'
-import { forgotPassword, resetAuth } from '../../redux/actions'
-
-interface UserData {
-  email: string;
-}
+import { AuthLayout, PageBreadcrumb } from '../../components'
 
 const BottomLink = () => {
   return (
     <p className="text-gray-500 dark:text-gray-400 text-center">
       Back to
-      <Link to="auth/login" className="text-primary ms-1">
+      <Link to="/auth/login" className="text-primary ms-1">
         <b>Log In</b>
       </Link>
     </p>
   )
 }
 
+// There's no self-service password reset — no email infrastructure exists to deliver a reset
+// link/token, and a self-service flow that hands a reset token to an anonymous caller would be
+// an account-takeover risk with no way to send it safely. An Admin/Super Admin resets a user's
+// password directly from Administration -> Users -> Reset Password instead (same trust model
+// already used for account creation).
 const RecoverPassword = () => {
-
-  const dispatch = useDispatch<AppDispatch>();
-  useEffect(() => {
-    dispatch(resetAuth());
-  }, [dispatch]);
-
-  const { loading, passwordReset, resetPasswordSuccess, error } = useSelector(
-    (state: RootState) => ({
-      loading: state.Auth.loading,
-      user: state.Auth.user,
-      error: state.Auth.error,
-      passwordReset: state.Auth.passwordReset,
-      resetPasswordSuccess: state.Auth.resetPasswordSuccess,
-    })
-  );
-  /*
-* form validation schema
-*/
-  const schemaResolver = yupResolver<any>(
-    yup.object().shape({
-      email: yup.string().email("Please enter a valid email").required("Please enter your email"),
-    })
-  );
-  /*
- * handle form submission
- */
-  const onSubmit = (formData: UserData) => {
-    dispatch(forgotPassword(formData.email));
-  };
   return (
     <>
       <PageBreadcrumb title='Recover Password' />
 
       <AuthLayout
         authTitle='Recover Password'
-        helpText="Enter your email address and we'll send you an email with instructions to reset your password."
+        helpText="There's no self-service password reset yet. Ask your Administrator to reset your password from Administration → Users — they'll set a new one and share it with you directly."
         bottomLinks={<BottomLink />}
       >
-        {!passwordReset && <VerticalForm<UserData>
-          onSubmit={onSubmit}
-          resolver={schemaResolver}
-        >
-
-          <FormInput
-            label='Email Address'
-            type='email'
-            name='email'
-            placeholder='Enter your email'
-            containerClass='mb-4'
-            className='form-input'
-            labelClassName='block text-sm font-medium text-gray-600 dark:text-gray-200 mb-2'
-          />
-
-          <div className="flex justify-center mb-6">
-            <button type='submit' className="btn w-full text-white bg-primary" disabled={loading}> Reset Password </button>
-          </div>
-        </VerticalForm>
-        }
+        <></>
       </AuthLayout>
     </>
   )

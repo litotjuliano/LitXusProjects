@@ -1,6 +1,7 @@
 using LitXus.Api.Filters;
 using LitXus.Application.Modules.Identity.Commands.AssignRole;
 using LitXus.Application.Modules.Identity.Commands.CreateUser;
+using LitXus.Application.Modules.Identity.Commands.ResetUserPassword;
 using LitXus.Application.Modules.Identity.Commands.RevokeRole;
 using LitXus.Application.Modules.Identity.Commands.UpdateUserStatus;
 using LitXus.Application.Modules.Identity.Queries.GetUsers;
@@ -13,6 +14,7 @@ namespace LitXus.Api.Controllers;
 public record UpdateUserStatusRequest(bool IsActive);
 public record AssignRoleRequest(Guid RoleId);
 public record CreateUserRequest(string Email, string FullName, string Password, Guid RoleId);
+public record ResetUserPasswordRequest(string NewPassword);
 
 [ApiController]
 [Authorize]
@@ -56,6 +58,14 @@ public class AdminUsersController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> RevokeRole(Guid id, Guid roleId)
     {
         await mediator.Send(new RevokeRoleCommand(id, roleId));
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/reset-password")]
+    [RequirePermission("Admin.Users.Update")]
+    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetUserPasswordRequest request)
+    {
+        await mediator.Send(new ResetUserPasswordCommand(id, request.NewPassword));
         return NoContent();
     }
 }

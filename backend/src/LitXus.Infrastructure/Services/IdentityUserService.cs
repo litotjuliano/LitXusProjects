@@ -82,4 +82,31 @@ public class IdentityUserService(UserManager<AppUser> userManager, IAppDbContext
 
         return new UserSummaryDto(user.Id, user.FullName, user.Email, user.IsActive, [role.Name], null);
     }
+
+    public async Task ResetUserPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString())
+            ?? throw new NotFoundException("User", userId);
+
+        var roleNames = await db.AppUserRoles.Where(ur => ur.UserId == userId)
+            .Join(db.AppRoles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .ToListAsync(cancellationToken);
+
+        // Same protection as CreateUserAsync/AssignRoleCommandHandler — otherwise any Admin
+        // (Admin.Users.Update is granted to the whole Admin role, not just Super Admin) could
+        // reset the install owner's password and take over the account.
+        if (roleNames.Contains("Super Admin"))
+        {
+            throw new ForbiddenException("The Super Admin account's password cannot be reset through this endpoint.");
+        }
+
+        var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await userManager.ResetPasswordAsync(user, resetToken, newPassword);
+        if (!result.Succeeded)
+        {
+            throw new ValidationException(result.Errors.Select(e => new ValidationFailure("newPassword", e.Description)));
+        }
+
+        await auditLogger.LogAsync("User", user.Id.ToString(), "ResetPassword", null, null, null, cancellationToken);
+    }
 }
