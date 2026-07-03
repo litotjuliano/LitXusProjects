@@ -50,7 +50,13 @@ public static class DependencyInjection
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IdentityService>();
 
-        services.AddScoped<ISeeder, RbacSeeder>();
+        // RbacSeeder is also registered as its concrete type so SeedDatabaseHostedService can
+        // resolve it alone (AlwaysRun path) without triggering IEnumerable<ISeeder> resolution,
+        // which — unlike lazy access — constructs every registered ISeeder implementation up
+        // front, including ones with fragile constructor dependencies (e.g. LicenseSeeder needs
+        // ILicenseKeyVerifier, which throws if Licensing:PublicKeyPem isn't configured yet).
+        services.AddScoped<RbacSeeder>();
+        services.AddScoped<ISeeder>(sp => sp.GetRequiredService<RbacSeeder>());
         services.AddScoped<ISeeder, CompanySeeder>();
         services.AddScoped<ISeeder, LicenseSeeder>();
         services.AddScoped<ISeeder, UserSeeder>();

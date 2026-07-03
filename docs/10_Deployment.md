@@ -44,6 +44,18 @@ npm run dev                                   # http://localhost:5173, proxies /
 
 All three options ship the **same build artifact** — the only difference is who operates the infrastructure.
 
+## 10.3a Initial Setup (First Boot)
+
+A fresh production install has **nothing seeded** — `Seeding:Enabled=false` means even the permission/role catalog would normally be skipped, except `RbacSeeder` runs in every environment regardless (it's reference data the app can't function without, not sample data — see `docs/08_Sample_Data.md` §8.5). Nothing else is seeded: no demo users, no demo company, no demo license, no demo accounting data.
+
+To bring a fresh instance up:
+
+1. **Keep the instance private** (firewalled / not yet publicly reachable) until step 2 is done — whoever completes step 2 first becomes the permanent install owner, and there's no UI/API path to demote or replace them afterward except direct database access.
+2. Visit `/auth/register` and create the first account. It is automatically activated and granted the **Super Admin** role — no seeded account exists to log in with instead.
+3. Log in, go to **Administration → License**, and apply the vendor-issued license key (generated offline via `backend/tools/LitXus.LicenseGenerator` — see `docs/17_License_Generator.md`). Nothing else in the app is usable until this step, since every module is gated behind an active license.
+4. Go to **Administration → Company Profile** and fill in the real company's registration details — this feeds every financial report's letterhead.
+5. Onboard additional Admin/User accounts directly — go to **Administration → Users → + New User**, enter their name/email/an initial password, and pick a role. The account is active immediately; there's no self-registration or separate activation step for anyone after the first bootstrap user (`/auth/register` rejects every call once any user exists). See `docs/phase-1-accounting/Admin_Setup_User_Guide.md` §3.
+
 ## 10.4 Docker Configuration
 
 ```dockerfile

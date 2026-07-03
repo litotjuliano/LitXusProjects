@@ -12,10 +12,16 @@ namespace LitXus.Infrastructure.Seeding;
 /// other four roles (Accountant, SalesUser, InventoryManager, Manager, Viewer) match the matrix
 /// in docs/06_RBAC_Auth.md §6.2 — SalesUser/InventoryManager get no grants yet since Sales/
 /// Inventory don't exist until Phase 2/3.
+///
+/// Runs in every environment (AlwaysRun), including production where Seeding:Enabled is false —
+/// this is reference/lookup data the app cannot function without, not demo data. Without it, a
+/// fresh production install's Roles table stays empty and the first self-registered user (see
+/// IdentityService.RegisterAsync) would silently get no role at all.
 /// </summary>
 public class RbacSeeder(IAppDbContext db) : ISeeder
 {
     public int Order => 1;
+    public bool AlwaysRun => true;
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
