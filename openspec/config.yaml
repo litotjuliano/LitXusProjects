@@ -38,6 +38,9 @@ context: |
   6. A feature is only complete when all applicable items above are done — code,
      OpenSpec (if applicable), OpenAPI (if applicable), and User Guide.
   7. If a change affects none of OpenSpec/OpenAPI, don't modify them.
+  8. End every completed task with a Documentation Summary: OpenSpec (Updated/Not
+     Required + reason), OpenAPI (Updated/Not Required + reason), User Guide
+     (Created/Updated/Not Required + reason), Outstanding TODOs (list or "None").
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
@@ -49,7 +52,6 @@ rules:
       handlers) — do not invent behavior that doesn't exist yet; propose the code
       change first if it doesn't exist
   specs:
-    - Use SHALL/MUST language; every requirement needs at least one #### Scenario
-      in GIVEN/WHEN/THEN or WHEN/THEN form
+    - "Use SHALL/MUST language; every requirement needs at least one #### Scenario in GIVEN/WHEN/THEN or WHEN/THEN form"
     - Quote exact exception types/messages from the source where short enough,
       rather than paraphrasing

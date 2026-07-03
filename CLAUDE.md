@@ -54,6 +54,32 @@ If any applicable item is missing, the task is not done.
 
 If a change affects neither business logic/architecture nor the REST contract, don't modify OpenSpec or OpenAPI unnecessarily — but still consider whether a User Guide is warranted.
 
+## 7. Post-Task Documentation Checklist (mandatory)
+
+Before considering any task complete, run this checklist:
+
+**OpenSpec** — did this task change business logic, workflows, module behavior, architecture/design, or introduce new business rules? If yes, update the relevant `openspec/specs/<capability>/spec.md`.
+
+**OpenAPI** — did this task add/modify/remove an API endpoint, change a request/response model, or change auth behavior? If yes, update the OpenAPI-facing docs (`docs/03_API_Specification.md`). If no, don't touch it.
+
+**User Guide** — does this feature need user instructions, or does an existing guide need updating? If yes, create/update a guide with: Objective, Prerequisites, a real business scenario, sample data, step-by-step instructions, expected results, accounting/system impact (if applicable), and a verification checklist.
+
+**Final verification** before closing any task:
+- ✅ Code implementation complete
+- ✅ OpenSpec updated if required
+- ✅ OpenAPI updated if required
+- ✅ User Guide created/updated if required
+- ✅ Documentation matches the final implementation
+- ✅ Assumptions, limitations, or TODOs are documented
+
+**End every completed task with a Documentation Summary:**
+```
+- OpenSpec: Updated / Not Required (reason)
+- OpenAPI: Updated / Not Required (reason)
+- User Guide: Created / Updated / Not Required (reason)
+- Outstanding TODOs: <list, or "None">
+```
+
 ## Other references
 
 - `docs/00_Overview.md` — human-readable planning docs index (docs/00-17), still the canonical reference; `openspec/` is a separate, machine-readable layer alongside it, not a replacement.
