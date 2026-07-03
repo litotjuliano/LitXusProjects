@@ -8,6 +8,8 @@
 
 > This supersedes and is unrelated to "LitXusCount" (the earlier multi-tenant SaaS learning project). Do not port assumptions, schema, or code from LitXusCount into this project.
 
+> **Two "OpenSpec" layers coexist by design, per capability vs. per phase:** this `docs/` tree (including the per-phase `docs/11_OpenSpec_Template.md` template and `docs/phase-N-*/` folders) is the human-readable planning reference. `openspec/specs/` (installed via the real [OpenSpec CLI](https://github.com/Fission-AI/OpenSpec), `@fission-ai/openspec`) is a separate, machine-readable layer organized by capability (`identity-auth`, `accounting`, `company-profile`, `licensing`, `audit-trail`) that AI coding assistants read directly before implementing changes — see root `CLAUDE.md` for the full documentation-update policy. The REST API contract itself is documented separately via OpenAPI/Swagger (§3, `docs/03_API_Specification.md`) — OpenSpec does not duplicate it.
+
 ## Product-to-Module Matrix
 
 | Product | Accounting | Sales | Inventory | GL Auto-Posting | Price (MYR/yr) |

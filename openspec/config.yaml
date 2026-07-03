@@ -1,0 +1,55 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  LitXus Systems — Malaysian SMB accounting/business app. Modular stand-alone product
+  (NOT multi-tenant SaaS): one monorepo, one codebase, a license-driven feature-flag
+  layer selects which modules (Accounting / Sales / Inventory) a given deployment
+  exposes. Products: LitXus Accounting Pro, LitXus Retail Pro, LitXus Enterprise Pro.
+
+  Stack: .NET 10 Clean Architecture backend (backend/src/LitXus.Domain ->
+  LitXus.Application -> LitXus.Infrastructure -> LitXus.Api), MediatR CQRS,
+  FluentValidation, EF Core 10 + SQL Server, ASP.NET Core Identity + JWT.
+  Frontend: Konrix Tailwind admin template, React 18 + TypeScript + Vite,
+  Redux Toolkit + Redux-Saga, React Router v6, React Hook Form + Yup.
+
+  Full human-readable planning docs live in docs/00-17 (docs/00_Overview.md is the
+  index) and remain the canonical reference — this openspec/ tree is a separate,
+  machine-readable capability-spec layer for AI coding assistants, not a replacement.
+  The REST API contract is documented separately via OpenAPI/Swagger
+  (backend/src/LitXus.Api/Program.cs, docs/03_API_Specification.md) — do not
+  duplicate API contract details into openspec/specs/; OpenSpec covers business
+  rules/workflows/architecture, OpenAPI covers the wire contract.
+
+  Documentation Update Policy (also in root CLAUDE.md — keep both in sync):
+  1. Read OpenSpec (openspec/specs/) first before implementing any feature.
+  2. Implement the code change.
+  3. Update the relevant openspec/specs/<capability>/spec.md if business logic,
+     workflows, architecture, or module behavior changed (via a change proposal:
+     openspec new change <name>, then propose/design/specs/tasks, then archive).
+  4. Update OpenAPI only if the REST contract itself changed (new/changed/removed
+     endpoints, request/response models, auth). Do not touch it for internal
+     logic changes that don't affect the API surface.
+  5. Update or create a docs/phase-*/User_Guide.md-style guide (real scenario,
+     sample data, expected results, verification checklist) for any implemented
+     feature or workflow.
+  6. A feature is only complete when all applicable items above are done — code,
+     OpenSpec (if applicable), OpenAPI (if applicable), and User Guide.
+  7. If a change affects none of OpenSpec/OpenAPI, don't modify them.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - Capability names must be kebab-case and map to a real module under
+      backend/src/LitXus.Domain/Modules or backend/src/LitXus.Application/Modules
+    - Every stated requirement must be traceable to real code (entities, validators,
+      handlers) — do not invent behavior that doesn't exist yet; propose the code
+      change first if it doesn't exist
+  specs:
+    - Use SHALL/MUST language; every requirement needs at least one #### Scenario
+      in GIVEN/WHEN/THEN or WHEN/THEN form
+    - Quote exact exception types/messages from the source where short enough,
+      rather than paraphrasing
