@@ -87,6 +87,14 @@ the new one assigned in one action).
 
 ![Role changed via the per-row dropdown](images/admin-guide-12-role-changed.png)
 
+### Reset a locked-out user's password
+
+There's no self-service "forgot password" — no email infrastructure exists
+to deliver a reset link safely. If a user forgets their password, click
+**Reset Password** on their row, enter a new password, and share it with
+them directly (the same trust model as creating their account in the first
+place). The change takes effect immediately.
+
 ---
 
 ## 4. Admin: Company Profile Setup

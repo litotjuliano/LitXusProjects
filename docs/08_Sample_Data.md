@@ -19,7 +19,7 @@ Size target: **MEDIUM** — realistic enough to exercise reports, pagination, an
 | Inventory | Stock Levels | realistic quantities across 2–3 warehouses |
 | Inventory | Stock Movements | 30–50 |
 | Inventory | Valuation examples | at least 3 products showing FIFO vs weighted-average divergence |
-| Identity | Users | 6 (one per seeded role, see below) |
+| Identity | Users | 7 (one per seeded role, see below) |
 
 ## 8.2 Users & Permissions Seed
 
@@ -27,11 +27,11 @@ Size target: **MEDIUM** — realistic enough to exercise reports, pagination, an
 |---|---|---|
 | superadmin@litxus.demo | Super Admin | install owner — full access including License + FeatureFlags |
 | admin@litxus.demo | Admin | full business access, used for approvals |
-| accountant@litxus.demo | Accountant | GL entry + reports testing *(not yet seeded — planned)* |
-| sales@litxus.demo | SalesUser | invoice/customer testing *(not yet seeded — Phase 2)* |
-| inventory@litxus.demo | InventoryManager | stock movement testing *(not yet seeded — Phase 3)* |
-| manager@litxus.demo | Manager | read-only reports testing *(not yet seeded — planned)* |
-| viewer@litxus.demo | Viewer | negative-permission testing, verify 403s *(not yet seeded — planned)* |
+| accountant@litxus.demo | Accountant | GL entry + reports testing |
+| salesuser@litxus.demo | SalesUser | invoice/customer testing (Sales module not built until Phase 2, so this account currently sees the Accounting-only nav with no Sales-permission endpoints to exercise yet) |
+| inventorymanager@litxus.demo | InventoryManager | stock movement testing (Inventory module not built until Phase 3, same caveat as above) |
+| manager@litxus.demo | Manager | read-only reports testing |
+| viewer@litxus.demo | Viewer | negative-permission testing, verify 403s |
 
 All seeded with password `Demo@12345` (Development/Demo environments only — never seeded in Production). `superadmin@litxus.demo` and `admin@litxus.demo` are implemented and verified (`UserSeeder`, [14_Tech_Implementation.md](14_Tech_Implementation.md) §14.4); the remaining four are documented here as the target state but not yet built.
 
@@ -55,7 +55,7 @@ Seed data deliberately includes:
 
 ## 8.5 How Seeding Works (as actually built)
 
-- `ISeeder` interface (`Order` + `SeedAsync` + `AlwaysRun`, default `false`), implemented today by `RbacSeeder` (Order 1 — Permissions catalog from code, 7 roles, role→permission grants), `CompanySeeder` (Order 2 — one local/demo company profile), `LicenseSeeder` (Order 3 — one local/demo Accounting Pro license), `UserSeeder` (Order 4 — `superadmin@litxus.demo` + `admin@litxus.demo`, via `UserManager<AppUser>` so passwords are hashed correctly, not inserted directly), `AccountingDemoDataSeeder` (Order 5 — 28 Chart of Accounts entries, 2 SST tax codes, and 102 GL entry rows across Jan–Jun telling one coherent 6-month SME narrative — 93 Posted, 4 Draft (2 intentionally unbalanced), 5 Voided with real reasons, plus a zero-value and a future-dated entry; checked by `Account.Code` individually rather than "any accounts exist" so it layers on top of accounts a user already created by hand). Run in `Order` by `SeedDatabaseHostedService` on startup. Full detail in [phase-1-accounting/Sample_Data.md](phase-1-accounting/Sample_Data.md). Bank accounts/statement lines from the original §8.1 plan are still not seeded — deferred until Bank Reconciliation (the feature that would actually make that data visible/usable) is built.
+- `ISeeder` interface (`Order` + `SeedAsync` + `AlwaysRun`, default `false`), implemented today by `RbacSeeder` (Order 1 — Permissions catalog from code, 7 roles, role→permission grants), `CompanySeeder` (Order 2 — one local/demo company profile), `LicenseSeeder` (Order 3 — one local/demo Accounting Pro license), `UserSeeder` (Order 4 — one demo account per seeded role, all 7: `superadmin@litxus.demo`, `admin@litxus.demo`, `accountant@litxus.demo`, `salesuser@litxus.demo`, `inventorymanager@litxus.demo`, `manager@litxus.demo`, `viewer@litxus.demo`, via `UserManager<AppUser>` so passwords are hashed correctly, not inserted directly), `AccountingDemoDataSeeder` (Order 5 — 28 Chart of Accounts entries, 2 SST tax codes, 102 GL entry rows across Jan–Jun telling one coherent 6-month SME narrative — 93 Posted, 4 Draft (2 intentionally unbalanced), 5 Voided with real reasons, plus a zero-value and a future-dated entry; checked by `Account.Code` individually rather than "any accounts exist" so it layers on top of accounts a user already created by hand — plus, once Bank Reconciliation shipped, 2 bank accounts (Maybank/CIMB, linked to the already-seeded cash accounts) with statement lines derived from real Posted GL activity, mostly pre-matched with a deliberately unmatched statement line and a couple of unmatched GL lines). Run in `Order` by `SeedDatabaseHostedService` on startup. Full detail in [phase-1-accounting/Sample_Data.md](phase-1-accounting/Sample_Data.md).
 - Gated by `appsettings.{Environment}.json` → `"Seeding": { "Enabled": true }` — **on** for Local and Demo environments, **off** by default in Production (a production install should never silently get demo data; if a customer wants sample data for training purposes, it's a deliberate, documented admin action) — **except** `RbacSeeder`, which sets `AlwaysRun => true` and runs in every environment regardless of the flag: the permission/role catalog is reference data the app cannot function without (not demo data), and without it a fresh production install's Roles table would stay empty and lock out the first self-registered user. See `docs/10_Deployment.md` §10.3a for the resulting production bootstrap procedure.
 - Idempotent: each seeder checks its own table is empty before inserting (`RbacSeeder` checks `Permissions`, `CompanySeeder` checks `Companies`, `LicenseSeeder` checks `Licenses`, `UserSeeder` checks `AspNetUsers` via `UserManager.Users`), so re-running the app doesn't duplicate seed rows.
 - **Verified**: fresh SQL Server container → migration → API startup → both `superadmin@litxus.demo` and `admin@litxus.demo` log in with the correct roles/permissions/enabledModules, and `admin@litxus.demo` successfully creates a GL account through the full RBAC-gated endpoint.

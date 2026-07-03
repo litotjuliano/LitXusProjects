@@ -38,10 +38,12 @@ POST   /api/v1/auth/register          bootstrap-only: succeeds once, for the ver
 POST   /api/v1/auth/login             { email, password } -> { accessToken, refreshToken, expiresIn, user }
 POST   /api/v1/auth/refresh           { refreshToken } -> new token pair (rotates refresh token)
 POST   /api/v1/auth/logout            revokes refresh token
-POST   /api/v1/auth/forgot-password
-POST   /api/v1/auth/reset-password
 GET    /api/v1/auth/me                current user + roles + permissions + enabled modules
 ```
+
+No self-service password reset endpoint — no email infrastructure exists to deliver a reset token
+safely, and returning one to an anonymous caller would be an account-takeover risk. See
+`POST /api/v1/admin/users/{id}/reset-password` in §3.4 instead.
 
 ## 3.4 Admin / RBAC Endpoints
 
@@ -53,6 +55,7 @@ PUT    /api/v1/admin/users/{id}                      edit profile
 PATCH  /api/v1/admin/users/{id}/status               activate/deactivate
 POST   /api/v1/admin/users/{id}/roles                assign role
 DELETE /api/v1/admin/users/{id}/roles/{roleId}        revoke role
+POST   /api/v1/admin/users/{id}/reset-password        { newPassword } — sets it immediately, server-side only; rejects a Super Admin target
 GET    /api/v1/admin/roles
 POST   /api/v1/admin/roles
 PUT    /api/v1/admin/roles/{id}
@@ -80,13 +83,15 @@ POST   /api/v1/accounting/gl-entries/{id}/void        Posted -> Voided (reason r
 
 GET    /api/v1/accounting/tax-codes
 POST   /api/v1/accounting/tax-codes
-POST   /api/v1/accounting/tax/calculate-sst           { amount } -> { sstAmount, total }
+POST   /api/v1/accounting/tax/calculate-sst           { subTotal, taxCodeId } -> { sstAmount, total }
 
 GET    /api/v1/accounting/bank-accounts
 POST   /api/v1/accounting/bank-accounts
 GET    /api/v1/accounting/bank-accounts/{id}/statement-lines
-POST   /api/v1/accounting/bank-accounts/{id}/statement-lines/import   CSV upload
+POST   /api/v1/accounting/bank-accounts/{id}/statement-lines/import   CSV upload (Date,Description,Amount)
 POST   /api/v1/accounting/bank-statement-lines/{id}/match             { glEntryLineId }
+POST   /api/v1/accounting/bank-statement-lines/{id}/unmatch
+GET    /api/v1/accounting/bank-accounts/{id}/unmatched-gl-lines
 GET    /api/v1/accounting/bank-accounts/{id}/reconciliation-status
 
 GET    /api/v1/accounting/reports/trial-balance       ?asOfDate=

@@ -15,10 +15,13 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 - [x] Any later call to `/auth/register` is rejected
 - [x] Admin/Super Admin can create a new user (name, email, password, role) in one step via the UI, active immediately
 - [x] Role can be changed for an existing user via a dropdown on the Users page (calls the existing assign/revoke endpoints)
-- [ ] Login rejects deactivated users with a clear message
+- [x] Login rejects deactivated users with a clear message (401 `USER_NOT_ACTIVE`) — was already implemented, now locked in by `Login_WhenAccountDeactivated_Returns401WithClearMessage`
 - [x] Successful login returns access + refresh token pair and `GET /auth/me` payload (roles, permissions, enabled modules)
-- [ ] Refresh token rotates on use; logout revokes it
-- [ ] Password reset flow (request + confirm) works end-to-end
+- [x] Refresh token rotates on use; logout revokes it — was already implemented, now locked in by `RefreshToken_RotatesOnUse_OldTokenIsRejectedAfterwards` and `Logout_RevokesTheRefreshToken`
+- [x] Password reset — no self-service (no email infrastructure to deliver a token safely); an
+  Admin/Super Admin resets a user's password directly from Administration → Users → Reset
+  Password, active immediately. Rejects resetting the Super Admin account, same guard as role
+  assignment/user creation.
 
 **Out of scope:** MFA, social login, 4-step wizard UI polish (basic single-step form is fine for Phase 1; the "4-step wizard" mentioned for the member-facing product in unrelated docs does not apply here).
 
@@ -73,9 +76,12 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 **User story:** As an Accountant, I want SST calculated consistently, so that tax figures are correct and auditable.
 
 **Acceptance criteria:**
-- [ ] Tax codes (SST-6, SST-0) are seeded and configurable (rate stored as data)
-- [ ] `POST /tax/calculate-sst` returns SST amount + total for a given subtotal and tax code
-- [ ] Rounding is 2dp, away-from-zero, applied consistently
+- [x] Tax codes (SST-6, SST-0) are seeded and configurable (rate stored as data) — plus list/create
+  via `GET/POST /accounting/tax-codes` and a Tax Codes admin page
+- [x] `POST /accounting/tax/calculate-sst` returns SST amount + total for a given subtotal and tax code
+- [x] Rounding is 2dp, away-from-zero, applied consistently — verified live: RM 2.50 at 1% → RM 0.03,
+  not RM 0.02, through the calculator service (delegates to `TaxCode.Calculate()`, not a
+  reimplementation)
 
 **Out of scope:** Full LHDN MyInvois submission (readiness only — see [15_Malaysia_Compliance.md](../15_Malaysia_Compliance.md)).
 
@@ -86,10 +92,13 @@ Duration: 4 weeks. Goal: a fully standalone, sellable Accounting product (GL, re
 **User story:** As an Accountant, I want to match bank statement lines against GL entries, so that I can confirm the books agree with the bank.
 
 **Acceptance criteria:**
-- [ ] Create bank accounts linked to a GL cash/bank account
-- [ ] Import statement lines via CSV
-- [ ] Manually match a statement line to a GL entry line (one-to-one in Phase 1)
-- [ ] Reconciliation status view shows matched vs. unmatched lines per bank account
+- [x] Create bank accounts linked to a GL cash/bank account
+- [x] Import statement lines via CSV — `Date,Description,Amount` format, all-or-nothing validation
+  (a malformed row rejects the whole file, nothing partially imported)
+- [x] Manually match a statement line to a GL entry line (one-to-one in Phase 1) — only Posted
+  entry lines are eligible, and a GL line already claimed by another statement line is rejected
+- [x] Unmatch a wrongly-matched line to correct it
+- [x] Reconciliation status view shows matched vs. unmatched lines per bank account
 
 **Out of scope:** Automatic/fuzzy matching (manual match only in Phase 1), multi-line matching (one statement line ↔ many GL lines).
 

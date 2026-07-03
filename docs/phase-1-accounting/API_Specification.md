@@ -5,23 +5,31 @@ Base: `/api/v1`. Envelope, status codes, and Swagger conventions per [03_API_Spe
 ## Auth
 
 ```
-POST   /auth/register        { email, password, fullName } -> 201, user status=Pending
+POST   /auth/register        { email, password, fullName } -> 201, bootstrap-only (works exactly once,
+                              for the very first user on a fresh install; every later call is rejected)
 POST   /auth/login           { email, password } -> 200 { accessToken, refreshToken, expiresIn, user }
-POST   /auth/refresh         { refreshToken } -> 200 new pair
-POST   /auth/logout          -> 204
-POST   /auth/forgot-password { email } -> 204 (always, to avoid email enumeration)
-POST   /auth/reset-password  { token, newPassword } -> 204
+POST   /auth/refresh         { refreshToken } -> 200 new pair (old refresh token is rotated out, no longer usable)
+POST   /auth/logout          -> 204 (revokes the stored refresh token)
 GET    /auth/me              -> 200 { id, fullName, email, roles[], permissions[], enabledModules[] }
 ```
+
+No self-service password reset (`/auth/forgot-password`/`/auth/reset-password` don't exist) — no
+email infrastructure exists to deliver a reset token safely, and returning one to an anonymous
+caller would be an account-takeover risk. See `POST /admin/users/{id}/reset-password` below.
 
 ## Admin — Users, Roles, Audit
 
 ```
 GET    /admin/users                     ?status=&role=&page=&pageSize=
+POST   /admin/users                     { email, fullName, password, roleId }   permission: Admin.Users.Update
+                                         creates a user, active immediately; rejects roleId="Super Admin"
 GET    /admin/users/{id}
 PATCH  /admin/users/{id}/status         { isActive: bool }   permission: Admin.Users.Update
 POST   /admin/users/{id}/roles          { roleId }           permission: Admin.Users.Update
 DELETE /admin/users/{id}/roles/{roleId}                       permission: Admin.Users.Update
+POST   /admin/users/{id}/reset-password { newPassword }       permission: Admin.Users.Update
+                                         sets a new password immediately, server-side only (no token
+                                         ever returned to the caller); rejects a target with the Super Admin role
 GET    /admin/roles                                            permission: Admin.Roles.Read
 GET    /admin/permissions                                      permission: Admin.Roles.Read
 GET    /admin/audit-logs                ?entityName=&entityId=&userId=&dateFrom=&dateTo=&action=&page=
@@ -54,7 +62,7 @@ POST   /accounting/gl-entries/{id}/void { reason }                              
 ```
 GET    /accounting/tax-codes                                    permission: Accounting.TaxCode.Read
 POST   /accounting/tax-codes            { code, name, rate, type }   permission: Accounting.TaxCode.Create
-POST   /tax/calculate-sst               { subTotal, taxCodeId } -> { sstAmount, total }   permission: Accounting.TaxCode.Read
+POST   /accounting/tax/calculate-sst    { subTotal, taxCodeId } -> { sstAmount, total }   permission: Accounting.TaxCode.Read
 ```
 
 ## Accounting — Bank Reconciliation
@@ -65,8 +73,19 @@ POST   /accounting/bank-accounts        { accountId, bankName, accountNumber }  
 GET    /accounting/bank-accounts/{id}/statement-lines            permission: Accounting.BankAccount.Read
 POST   /accounting/bank-accounts/{id}/statement-lines/import      multipart/form-data CSV   permission: Accounting.BankAccount.Update
 POST   /accounting/bank-statement-lines/{id}/match                { glEntryLineId }         permission: Accounting.BankAccount.Update
+POST   /accounting/bank-statement-lines/{id}/unmatch                                         permission: Accounting.BankAccount.Update
+GET    /accounting/bank-accounts/{id}/unmatched-gl-lines                                     permission: Accounting.BankAccount.Read
 GET    /accounting/bank-accounts/{id}/reconciliation-status                                  permission: Accounting.BankAccount.Read
 ```
+
+CSV import format (`statement-lines/import`): header row `Date,Description,Amount` — `Date` as
+`yyyy-MM-dd`, `Amount` a signed decimal (+deposit/-withdrawal). All-or-nothing: a malformed row
+rejects the whole file with every bad row's error listed, nothing partially imported. Description
+may be double-quoted to contain a comma.
+
+`unmatched-gl-lines` wasn't in the original endpoint list — added to populate the two-pane
+matching screen's right-hand pane (Posted GL entry lines against the bank account's linked GL
+account, not yet matched to any statement line).
 
 ## Accounting — Reports
 

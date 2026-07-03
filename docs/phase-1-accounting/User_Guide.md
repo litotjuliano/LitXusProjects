@@ -162,12 +162,71 @@ suitable for sharing with an auditor or bank), and **Export Excel** (an
 
 ---
 
-## 6. Administration (Admin/Super Admin only)
+## 6. Tax Codes (SST)
+
+Go to **Accounting → Tax Codes**.
+
+The two seeded codes (`SST-6` at 6%, `SST-0` for zero-rated/exempt sales)
+cover most day-to-day use — click **+ New Tax Code** only if you need a
+different rate (e.g. a future income-tax reference code).
+
+![Tax Codes page with the inline calculator](images/user-guide-08-tax-codes.png)
+
+**Scenario — calculate SST on a RM 1,000 sale:**
+
+1. In the **Test Calculator** panel, pick `SST-6` and enter `1000` as the
+   Sub-Total.
+2. Click **Calculate**. You'll see SST Amount `RM 60.00` and Total
+   `RM 1,060.00`.
+3. Rounding is 2dp, away-from-zero — try `2.50` at a 1% rate and you'll get
+   `RM 0.03`, not the `RM 0.02` a naive banker's-rounding implementation
+   would produce (the exact midpoint RM 0.025 always rounds up).
+
+This calculator is the same `ISstCalculator` service a future Sales invoice
+line will call — the tax codes you create here are ready to use once that
+module ships.
+
+---
+
+## 7. Bank Reconciliation
+
+Go to **Accounting → Bank Reconciliation**.
+
+**Scenario — reconcile a Maybank statement:**
+
+1. If no bank account exists yet, click **+ New Bank Account**, pick the
+   linked GL account (e.g. `1010 Cash - Maybank Current`), and enter the
+   bank name and account number.
+2. Prepare a CSV with a header row `Date,Description,Amount` — dates as
+   `yyyy-MM-dd`, amounts signed (positive for a deposit, negative for a
+   withdrawal). Choose the file and click **Import Statement CSV**.
+   If any row is malformed, the whole file is rejected with every bad row
+   listed — nothing is partially imported.
+3. The left pane shows statement lines (already-matched ones are greyed out
+   with a ✓); the right pane shows unmatched Posted GL entry lines for that
+   account. Click one row in each pane, then **Match Selected**.
+4. The "X of Y lines matched" status updates immediately, and both matched
+   rows drop out of their "unmatched" pools.
+
+![Bank Reconciliation two-pane matching screen](images/user-guide-09-bank-reconciliation.png)
+
+Only `Posted` GL entry lines are eligible for matching (a Draft entry has no
+real ledger impact yet), and a GL line already claimed by another statement
+line can't be matched again — both are enforced server-side, not just by
+the UI hiding already-matched rows.
+
+Matched the wrong pair by mistake? Click **Unmatch** on the statement line's
+row — it goes back to unreconciled and the GL line becomes available to
+match again.
+
+---
+
+## 8. Administration (Admin/Super Admin only)
 
 Go to **Administration → Users / Roles & Permissions / Audit Logs**.
 
-- **Users**: view every user, activate/deactivate accounts. Role assignment
-  is API-only for now (no UI button yet).
+- **Users**: view every user, activate/deactivate accounts, change a user's
+  role via the dropdown on each row.
 - **Roles & Permissions**: browse the 7 fixed roles and their permission
   grants (read-only in Phase 1 — no custom role creation yet).
 - **Audit Logs**: every Create/Update/Delete on accounts, GL entries, users,
@@ -175,21 +234,6 @@ Go to **Administration → Users / Roles & Permissions / Audit Logs**.
   diff.
 
 These pages don't require any manual data entry — they reflect what the
-system captured automatically from Sections 3–4 above. For a full hands-on
-walkthrough of onboarding a new user (self-registration → activation → role
-assignment), Company Profile setup, and License management, see
-[Admin_Setup_User_Guide.md](Admin_Setup_User_Guide.md).
-
----
-
-## Not Yet Built
-
-For completeness, two Phase 1 features have no UI to key data into yet:
-
-- **SST Tax calculation** — tax codes exist and are seeded, but there's no
-  `/tax/calculate-sst` endpoint or admin page yet.
-- **Bank Reconciliation** — the domain model exists, but there's no page to
-  create bank accounts, import statement lines, or match them to GL entries.
-
-Both are tracked in the Phase 1 backlog (see conversation/planning notes,
-not yet reflected in [Features.md](Features.md) as separate backlog items).
+system captured automatically from Sections 3–7 above. For a full hands-on
+walkthrough of onboarding a new user, Company Profile setup, and License
+management, see [Admin_Setup_User_Guide.md](Admin_Setup_User_Guide.md).
