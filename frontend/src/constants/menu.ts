@@ -103,6 +103,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_building_2_line',
     url: '/admin/company-profile',
+    roles: ['Admin', 'Super Admin'],
   },
   {
     key: 'admin-users',
@@ -110,6 +111,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_group_line',
     url: '/admin/users',
+    roles: ['Admin', 'Super Admin'],
   },
   {
     key: 'admin-roles',
@@ -117,6 +119,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_shield_line',
     url: '/admin/roles',
+    roles: ['Admin', 'Super Admin'],
   },
   {
     key: 'admin-audit-logs',
@@ -124,6 +127,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     isTitle: false,
     icon: 'mgc_time_line',
     url: '/admin/audit-logs',
+    roles: ['Admin', 'Super Admin'],
   },
   {
     key: 'admin-license',

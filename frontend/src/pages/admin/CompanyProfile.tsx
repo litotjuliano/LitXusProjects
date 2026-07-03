@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
 
 import { PageBreadcrumb, FormInput, VerticalForm, DataTable, type DataTableColumn } from "../../components";
+import { RootState } from "../../redux/store";
 import ModalLayout from "../../components/HeadlessUI/ModalLayout";
 import {
   getCompanyProfile,
@@ -97,6 +100,12 @@ const toFormValues = (p: CompanyProfileType): CompanyProfileFormValues => ({
 const blankToNull = (v: string) => (v.trim() === "" ? null : v);
 
 const CompanyProfile = () => {
+  const currentUser = useSelector((state: RootState) => state.Auth.user as any);
+  // Menu hides this page from non-Admins, but routes/index.tsx's `roles` field isn't actually
+  // enforced by the router (see Routes.tsx) — this guard is what actually blocks direct URL
+  // navigation for everyone else (same pattern as pages/admin/License.tsx).
+  const isAdminOrSuperAdmin = (currentUser?.roles ?? []).some((r: string) => r === "Admin" || r === "Super Admin");
+
   const [defaultValues, setDefaultValues] = useState<CompanyProfileFormValues>(emptyDefaults);
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -263,6 +272,10 @@ const CompanyProfile = () => {
       setSignatoryError(typeof err === "string" ? err : "Could not add the signatory. Please try again.");
     }
   };
+
+  if (!isAdminOrSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (loading) {
     return (

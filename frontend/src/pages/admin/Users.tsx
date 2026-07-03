@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
 import { PageBreadcrumb, DataTable, type DataTableColumn } from "../../components";
 import { listUsers, updateUserStatus, type UserSummary } from "../../helpers/api/admin";
+import { RootState } from "../../redux/store";
 
 const Users = () => {
+  const currentUser = useSelector((state: RootState) => state.Auth.user as any);
+  // Menu hides this page from non-Admins, but routes/index.tsx's `roles` field isn't actually
+  // enforced by the router (see Routes.tsx) — this guard is what actually blocks direct URL
+  // navigation for everyone else (same pattern as pages/admin/License.tsx).
+  const isAdminOrSuperAdmin = (currentUser?.roles ?? []).some((r: string) => r === "Admin" || r === "Super Admin");
+
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -82,6 +91,10 @@ const Users = () => {
       ),
     },
   ];
+
+  if (!isAdminOrSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <>
