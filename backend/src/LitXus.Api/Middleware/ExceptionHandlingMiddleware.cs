@@ -38,6 +38,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
             AccountCodeDuplicateException dup => (HttpStatusCode.Conflict, dup.ErrorCode, dup.Message, null),
             StatementLineAlreadyMatchedException dup => (HttpStatusCode.Conflict, dup.ErrorCode, dup.Message, null),
+            TaxCodeDuplicateException dup => (HttpStatusCode.Conflict, dup.ErrorCode, dup.Message, null),
+            GLEntryLineAlreadyMatchedException dup => (HttpStatusCode.Conflict, dup.ErrorCode, dup.Message, null),
 
             VoidRequiresReasonException vr => (HttpStatusCode.BadRequest, vr.ErrorCode, vr.Message, null),
 

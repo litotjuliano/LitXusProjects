@@ -60,6 +60,14 @@ const MENU_ITEMS: MenuItemTypes[] = [
     module: 'Accounting',
   },
   {
+    key: 'accounting-tax-codes',
+    label: 'Tax Codes',
+    isTitle: false,
+    icon: 'mgc_percentage_line',
+    url: '/accounting/tax-codes',
+    module: 'Accounting',
+  },
+  {
     key: 'accounting-reports',
     label: 'Reports',
     isTitle: false,

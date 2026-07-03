@@ -28,12 +28,12 @@ public class AccountingDemoDataSeeder(
         var accounts = await SeedAccountsAsync(cancellationToken);
         await SeedTaxCodesAsync(cancellationToken);
 
-        if (await db.GLEntries.AnyAsync(cancellationToken))
+        if (!await db.GLEntries.AnyAsync(cancellationToken))
         {
-            return;
+            await SeedGLEntriesAsync(accounts, cancellationToken);
         }
 
-        await SeedGLEntriesAsync(accounts, cancellationToken);
+        await SeedBankAccountsAsync(accounts, cancellationToken);
     }
 
     private async Task<Dictionary<string, Account>> SeedAccountsAsync(CancellationToken cancellationToken)
@@ -247,6 +247,60 @@ public class AccountingDemoDataSeeder(
         // Future-dated entry — Phase 1 has no period-close, so this is accepted, not rejected.
         await PostEntryAsync(A, new Txn(new DateOnly(year, 9, 15), "Advance rental payment for September (prepaid)",
             [new("5100", 3500, 0), new("1010", 0, 3500)]), cancellationToken);
+    }
+
+    /// <summary>2 bank accounts (Maybank/CIMB, matching the cash accounts the rest of this
+    /// narrative already posts against) with statement lines derived from the real Posted GL
+    /// activity — most pre-matched, a couple of GL lines and one statement line deliberately left
+    /// unmatched (docs/08_Sample_Data.md §8.4's "one bank statement line with no matching GL
+    /// entry" scenario), so Bank Reconciliation has real, non-trivial data to demonstrate on.</summary>
+    private async Task SeedBankAccountsAsync(Dictionary<string, Account> accounts, CancellationToken cancellationToken)
+    {
+        if (await db.BankAccounts.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var maybank = BankAccount.Create(accounts["1010"].Id, "Maybank", "1234-5678-9012");
+        var cimb = BankAccount.Create(accounts["1020"].Id, "CIMB Bank", "7001234567");
+        db.BankAccounts.AddRange(maybank, cimb);
+        await db.SaveChangesAsync(cancellationToken);
+
+        await SeedStatementLinesAsync(maybank, accounts["1010"].Id, cancellationToken);
+        await SeedStatementLinesAsync(cimb, accounts["1020"].Id, cancellationToken);
+    }
+
+    private async Task SeedStatementLinesAsync(BankAccount bankAccount, Guid accountId, CancellationToken cancellationToken)
+    {
+        var postedLines = await (
+            from line in db.GLEntryLines.AsNoTracking()
+            join entry in db.GLEntries.AsNoTracking() on line.GLEntryId equals entry.Id
+            where line.AccountId == accountId && entry.Status == GLEntryStatus.Posted
+            orderby entry.EntryDate
+            select new { line.Id, entry.EntryDate, entry.Description, line.DebitAmount, line.CreditAmount }
+        ).Take(12).ToListAsync(cancellationToken);
+
+        if (postedLines.Count == 0)
+        {
+            return;
+        }
+
+        // Leave the last 2 GL lines deliberately unmatched so the "Unmatched GL Lines" pane has
+        // real content to show, not just an empty state.
+        foreach (var l in postedLines.Take(postedLines.Count - 2))
+        {
+            // Dr increases a debit-normal Cash account (money in = deposit, +); Cr decreases it
+            // (money out = withdrawal, -) — matches BankStatementLines.Amount's schema convention.
+            var amount = l.DebitAmount > 0 ? l.DebitAmount : -l.CreditAmount;
+            var statementLine = BankStatementLine.Create(bankAccount.Id, l.EntryDate, l.Description, amount);
+            statementLine.Match(l.Id);
+            db.BankStatementLines.Add(statementLine);
+        }
+
+        db.BankStatementLines.Add(BankStatementLine.Create(
+            bankAccount.Id, postedLines[^1].EntryDate.AddDays(1), "Unidentified bank charge", -15.00m));
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private void CreateDraft(Func<string, Account> a, DateOnly date, string description, Line[] lines)

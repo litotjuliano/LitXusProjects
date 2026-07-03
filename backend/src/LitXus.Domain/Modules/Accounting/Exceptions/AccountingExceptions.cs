@@ -30,3 +30,12 @@ public sealed class VoidRequiresReasonException()
 
 public sealed class StatementLineAlreadyMatchedException()
     : DomainException("STATEMENT_LINE_ALREADY_MATCHED", "This bank statement line is already reconciled.");
+
+public sealed class TaxCodeDuplicateException(string code)
+    : DomainException("TAX_CODE_DUPLICATE", $"A tax code with code '{code}' already exists.");
+
+public sealed class GLEntryLineAlreadyMatchedException()
+    : DomainException("GL_ENTRY_LINE_ALREADY_MATCHED", "This GL entry line is already matched to another bank statement line.");
+
+public sealed class StatementLineNotMatchedException()
+    : DomainException("STATEMENT_LINE_NOT_MATCHED", "This bank statement line isn't matched to anything yet.");

@@ -35,4 +35,15 @@ public class BankStatementLine : BaseEntity
         MatchedGLEntryLineId = glEntryLineId;
         IsReconciled = true;
     }
+
+    public void Unmatch()
+    {
+        if (!IsReconciled)
+        {
+            throw new StatementLineNotMatchedException();
+        }
+
+        MatchedGLEntryLineId = null;
+        IsReconciled = false;
+    }
 }

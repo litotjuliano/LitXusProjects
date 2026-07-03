@@ -1,6 +1,8 @@
 using System.Reflection;
 using FluentValidation;
 using LitXus.Application.Common.Behaviors;
+using LitXus.Application.Common.Interfaces;
+using LitXus.Application.Modules.Accounting.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LitXus.Application;
@@ -19,6 +21,8 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(assembly);
+
+        services.AddSingleton<ISstCalculator, SstCalculator>();
 
         return services;
     }

@@ -20,6 +20,7 @@ const Dashboard = React.lazy(() => import("../pages/accounting/Dashboard"));
 const ChartOfAccounts = React.lazy(() => import("../pages/accounting/ChartOfAccounts"));
 const GLEntries = React.lazy(() => import("../pages/accounting/GLEntries"));
 const BankReconciliation = React.lazy(() => import("../pages/accounting/BankReconciliation"));
+const TaxCodes = React.lazy(() => import("../pages/accounting/TaxCodes"));
 const TrialBalance = React.lazy(() => import("../pages/accounting/reports/TrialBalance"));
 const IncomeStatement = React.lazy(() => import("../pages/accounting/reports/IncomeStatement"));
 const BalanceSheet = React.lazy(() => import("../pages/accounting/reports/BalanceSheet"));
@@ -96,6 +97,12 @@ const accountingRoutes: RoutesProps = {
       path: "/accounting/bank-reconciliation",
       name: "Bank Reconciliation",
       element: <BankReconciliation />,
+      route: PrivateRoute,
+    },
+    {
+      path: "/accounting/tax-codes",
+      name: "Tax Codes",
+      element: <TaxCodes />,
       route: PrivateRoute,
     },
     {
