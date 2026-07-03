@@ -33,12 +33,24 @@ export interface GLEntry {
   lines: GLEntryLine[];
 }
 
-function listAccounts() {
-  return api.get("/accounting/accounts", null);
+function listAccounts(includeInactive = false) {
+  return api.get("/accounting/accounts", includeInactive ? { includeInactive: true } : null);
 }
 
 function createAccount(payload: Pick<Account, "code" | "name" | "type" | "parentAccountId">) {
   return api.create("/accounting/accounts", payload);
+}
+
+function updateAccount(id: string, name: string, parentAccountId: string | null) {
+  return api.update(`/accounting/accounts/${id}`, { name, parentAccountId });
+}
+
+function deactivateAccount(id: string) {
+  return api.create(`/accounting/accounts/${id}/deactivate`, {});
+}
+
+function reactivateAccount(id: string) {
+  return api.create(`/accounting/accounts/${id}/reactivate`, {});
 }
 
 function listGLEntries() {
@@ -49,6 +61,10 @@ function createGLEntry(payload: { entryDate: string; description: string; lines:
   return api.create("/accounting/gl-entries", payload);
 }
 
+function updateGLEntry(id: string, payload: { entryDate: string; description: string; lines: GLEntryLine[] }) {
+  return api.update(`/accounting/gl-entries/${id}`, payload);
+}
+
 function postGLEntry(id: string) {
   return api.create(`/accounting/gl-entries/${id}/post`, {});
 }
@@ -57,4 +73,15 @@ function voidGLEntry(id: string, reason: string) {
   return api.create(`/accounting/gl-entries/${id}/void`, { reason });
 }
 
-export { listAccounts, createAccount, listGLEntries, createGLEntry, postGLEntry, voidGLEntry };
+export {
+  listAccounts,
+  createAccount,
+  updateAccount,
+  deactivateAccount,
+  reactivateAccount,
+  listGLEntries,
+  createGLEntry,
+  updateGLEntry,
+  postGLEntry,
+  voidGLEntry,
+};

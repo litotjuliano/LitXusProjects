@@ -7,7 +7,9 @@ import {
   listAccounts,
   listGLEntries,
   createGLEntry,
+  updateGLEntry,
   postGLEntry,
+  voidGLEntry,
   type Account,
   type GLEntry,
   type GLEntryStatus,
@@ -31,6 +33,8 @@ const GLEntries = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [editingEntry, setEditingEntry] = useState<GLEntry | null>(null);
 
   const fetchEntries = () => {
     setLoading(true);
@@ -44,6 +48,32 @@ const GLEntries = () => {
     fetchEntries();
     listAccounts().then((res) => setAccounts(res.data?.data ?? [])).catch(() => setAccounts([]));
   }, []);
+
+  const handlePost = async (entry: GLEntry) => {
+    setBusyId(entry.id);
+    try {
+      await postGLEntry(entry.id);
+      await fetchEntries();
+    } catch (err) {
+      window.alert(typeof err === "string" ? err : "Could not post this entry. Please try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleVoid = async (entry: GLEntry) => {
+    const reason = window.prompt("Reason for voiding this entry:");
+    if (!reason) return;
+    setBusyId(entry.id);
+    try {
+      await voidGLEntry(entry.id, reason);
+      await fetchEntries();
+    } catch (err) {
+      window.alert(typeof err === "string" ? err : "Could not void this entry. Please try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const { register, control, handleSubmit, watch, reset } = useForm<GLEntryFormValues>({
     defaultValues: {
@@ -71,18 +101,86 @@ const GLEntries = () => {
       sortAccessor: (e) => e.status,
     },
     { key: "description", header: "Description", render: (e) => e.description, sortAccessor: (e) => e.description },
+    {
+      key: "actions",
+      header: "",
+      className: "text-right",
+      render: (e) => (
+        <div className="flex justify-end gap-3">
+          {e.status === "Draft" && (
+            <>
+              <button
+                onClick={() => openEditModal(e)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handlePost(e)}
+                disabled={busyId === e.id}
+                className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+              >
+                Post
+              </button>
+            </>
+          )}
+          {e.status === "Posted" && (
+            <button
+              onClick={() => handleVoid(e)}
+              disabled={busyId === e.id}
+              className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+            >
+              Void
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
 
   const closeModal = () => {
     setShowModal(false);
     setFormError(null);
+    setEditingEntry(null);
     reset();
+  };
+
+  const openNewModal = () => {
+    setFormError(null);
+    setEditingEntry(null);
+    reset({
+      entryDate: new Date().toISOString().slice(0, 10),
+      description: "",
+      lines: [
+        { accountId: "", debitAmount: 0, creditAmount: 0 },
+        { accountId: "", debitAmount: 0, creditAmount: 0 },
+      ],
+    });
+    setShowModal(true);
+  };
+
+  const openEditModal = (entry: GLEntry) => {
+    setFormError(null);
+    setEditingEntry(entry);
+    reset({
+      entryDate: entry.entryDate,
+      description: entry.description,
+      lines: entry.lines.map((l) => ({
+        accountId: l.accountId,
+        debitAmount: l.debitAmount,
+        creditAmount: l.creditAmount,
+        lineDescription: l.lineDescription,
+      })),
+    });
+    setShowModal(true);
   };
 
   const submit = async (values: GLEntryFormValues, post: boolean) => {
     setFormError(null);
     try {
-      const entry = await createGLEntry(values).then((res) => res.data.data);
+      const entry = editingEntry
+        ? await updateGLEntry(editingEntry.id, values).then((res) => res.data.data)
+        : await createGLEntry(values).then((res) => res.data.data);
       if (post) await postGLEntry(entry.id);
       closeModal();
       fetchEntries();
@@ -94,7 +192,7 @@ const GLEntries = () => {
   return (
     <>
       <PageBreadcrumb title="GL Entries" name="GL Entries" breadCrumbItems={["Accounting", "GL Entries"]}>
-        <button className="btn text-white bg-primary text-sm" onClick={() => { setFormError(null); setShowModal(true); }}>
+        <button className="btn text-white bg-primary text-sm" onClick={openNewModal}>
           + New Entry
         </button>
       </PageBreadcrumb>
@@ -110,7 +208,9 @@ const GLEntries = () => {
       />
 
       <ModalLayout showModal={showModal} toggleModal={closeModal} panelClassName="w-full max-w-3xl bg-white dark:bg-slate-800 p-6">
-        <h5 className="text-lg font-medium text-slate-900 dark:text-slate-200 mb-4">New GL Entry</h5>
+        <h5 className="text-lg font-medium text-slate-900 dark:text-slate-200 mb-4">
+          {editingEntry ? "Edit GL Entry" : "New GL Entry"}
+        </h5>
         <form className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -185,7 +285,7 @@ const GLEntries = () => {
               Cancel
             </button>
             <button type="button" className="btn bg-white border border-slate-300 text-sm" onClick={handleSubmit((v) => submit(v, false))}>
-              Save as Draft
+              {editingEntry ? "Save Changes" : "Save as Draft"}
             </button>
             <button
               type="button"

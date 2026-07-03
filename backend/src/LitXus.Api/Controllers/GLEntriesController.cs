@@ -2,6 +2,7 @@ using LitXus.Api.Filters;
 using LitXus.Application.Common.Interfaces;
 using LitXus.Application.Modules.Accounting.Commands.CreateGLEntry;
 using LitXus.Application.Modules.Accounting.Commands.PostGLEntry;
+using LitXus.Application.Modules.Accounting.Commands.UpdateGLEntry;
 using LitXus.Application.Modules.Accounting.Commands.VoidGLEntry;
 using LitXus.Application.Modules.Accounting.Queries.GetGLEntries;
 using MediatR;
@@ -32,6 +33,14 @@ public class GLEntriesController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(command);
         return CreatedAtAction(nameof(GetAll), new { data = result, meta = (object?)null });
+    }
+
+    [HttpPut("{id:guid}")]
+    [RequirePermission("Accounting.GLEntry.Update")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] CreateGLEntryCommand command)
+    {
+        var result = await mediator.Send(new UpdateGLEntryCommand(id, command.EntryDate, command.Description, command.Lines));
+        return Ok(new { data = result, meta = (object?)null });
     }
 
     [HttpPost("{id:guid}/post")]
