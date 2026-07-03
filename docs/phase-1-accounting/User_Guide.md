@@ -142,8 +142,8 @@ from the entry created in Step 4, and the report still balances
 
 Go to **Administration → Users / Roles & Permissions / Audit Logs**.
 
-- **Users**: view every user, activate/deactivate accounts, assign or
-  revoke roles.
+- **Users**: view every user, activate/deactivate accounts. Role assignment
+  is API-only for now (no UI button yet).
 - **Roles & Permissions**: browse the 7 fixed roles and their permission
   grants (read-only in Phase 1 — no custom role creation yet).
 - **Audit Logs**: every Create/Update/Delete on accounts, GL entries, users,
@@ -151,7 +151,10 @@ Go to **Administration → Users / Roles & Permissions / Audit Logs**.
   diff.
 
 These pages don't require any manual data entry — they reflect what the
-system captured automatically from Sections 3–4 above.
+system captured automatically from Sections 3–4 above. For a full hands-on
+walkthrough of onboarding a new user (self-registration → activation → role
+assignment), Company Profile setup, and License management, see
+[Admin_Setup_User_Guide.md](Admin_Setup_User_Guide.md).
 
 ---
 
