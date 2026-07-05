@@ -44,6 +44,7 @@ A single license row (`Licenses` table, see [02_Database_Schema.md](02_Database_
 | 17 | [License Generator](17_License_Generator.md) | Offline signing tool (`backend/tools/LitXus.LicenseGenerator`) — keypair/license generation, applying keys, rotation, troubleshooting |
 | — | [Phase 1 User Guide](phase-1-accounting/User_Guide.md) | Click-by-click walkthrough for manually keying in Chart of Accounts / GL Entries / Reports through the actual UI, with screenshots |
 | — | [Phase 1 Admin & System Setup Guide](phase-1-accounting/Admin_Setup_User_Guide.md) | Hands-on walkthrough of License management (Super Admin), onboarding a new user and assigning a role (Admin), Company Profile setup, and what a restricted User-tier account actually sees, with screenshots |
+| — | [Phase 2 User Guide](phase-2-sales/User_Guide.md) | Click-by-click walkthrough for billing a customer, recording/verifying a payment, and issuing a credit note through the actual UI, with screenshots |
 
 ## Locked Technology Stack
 

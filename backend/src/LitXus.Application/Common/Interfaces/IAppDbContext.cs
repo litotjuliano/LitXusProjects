@@ -1,5 +1,6 @@
 using LitXus.Domain.Modules.Accounting.Entities;
 using LitXus.Domain.Modules.Identity.Entities;
+using LitXus.Domain.Modules.Sales.Entities;
 using LitXus.Domain.Modules.Shared.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +33,14 @@ public interface IAppDbContext
     DbSet<TaxCode> TaxCodes { get; }
     DbSet<BankAccount> BankAccounts { get; }
     DbSet<BankStatementLine> BankStatementLines { get; }
+
+    // Sales
+    DbSet<Customer> Customers { get; }
+    DbSet<Invoice> Invoices { get; }
+    DbSet<InvoiceLine> InvoiceLines { get; }
+    DbSet<Payment> Payments { get; }
+    DbSet<CreditNote> CreditNotes { get; }
+    DbSet<SalesSettings> SalesSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

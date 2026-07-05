@@ -110,11 +110,12 @@ CSV export is client-side (each report page builds the file from the JSON above 
 endpoint; the API is Bearer-token, not cookie, authenticated so a plain download link can't carry the
 auth header, and for CSV the data's already in hand from the page's own JSON fetch anyway).
 
-## 3.6 Sales Module (Phase 2) — 15+ endpoints
+## 3.6 Sales Module (Phase 2) — implemented
+
+Full detail (request/response shapes, permissions) in [phase-2-sales/API_Specification.md](phase-2-sales/API_Specification.md).
 
 ```
 GET    /api/v1/sales/customers
-GET    /api/v1/sales/customers/{id}
 POST   /api/v1/sales/customers
 PUT    /api/v1/sales/customers/{id}
 PATCH  /api/v1/sales/customers/{id}/status
@@ -125,18 +126,28 @@ POST   /api/v1/sales/invoices                          Draft
 PUT    /api/v1/sales/invoices/{id}                      Draft only
 POST   /api/v1/sales/invoices/{id}/issue                Draft -> Issued (assigns sequential number)
 POST   /api/v1/sales/invoices/{id}/void                 reason required
-GET    /api/v1/sales/invoices/{id}/pdf
 
 POST   /api/v1/sales/invoices/{id}/payments
 GET    /api/v1/sales/payments                          filter: status
 POST   /api/v1/sales/payments/{id}/verify               admin verifies -> updates invoice status
+POST   /api/v1/sales/payments/{id}/reject               reason required (beyond original spec — Payment.Status
+                                                          already includes Rejected, so something has to set it)
 
 POST   /api/v1/sales/credit-notes
 GET    /api/v1/sales/credit-notes/{id}
+GET    /api/v1/sales/credit-notes                       list (beyond original spec)
+
+GET    /api/v1/sales/settings                           beyond original spec — GL account mapping needs
+PUT    /api/v1/sales/settings                           somewhere to be viewed/configured
 
 GET    /api/v1/sales/reports/sales-summary             ?from=&to=&groupBy=customer|product|month
 GET    /api/v1/sales/reports/aging                     accounts receivable aging buckets
 ```
+
+Not built from the original list: `GET /sales/customers/{id}` (no single-customer detail view exists —
+the list view + edit modal cover current usage) and `GET /sales/invoices/{id}/pdf` (no PDF export for
+invoices yet, unlike the 4 Accounting reports which do have PDF/Excel export). Both are real gaps for a
+future pass, not silently dropped.
 
 ## 3.7 Inventory Module (Phase 3) — 12+ endpoints
 

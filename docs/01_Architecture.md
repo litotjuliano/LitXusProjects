@@ -77,39 +77,50 @@ A module is "disabled" for a given install purely via the `FeatureFlag` check in
 
 ## 1.4 Integration Points (Enterprise Pro only)
 
-GL auto-posting is implemented as a **domain event → MediatR notification → handler** pattern, so Accounting stays decoupled from Sales/Inventory at compile time:
+GL auto-posting is implemented as a **domain event → MediatR notification → handler** pattern, so Accounting stays decoupled from Sales/Inventory at compile time. Built in Phase 2 (Sales); the mechanism is generic and Phase 3 (Inventory) reuses it for COGS posting.
+
+`BaseEntity` queues plain `IDomainEvent`s (a framework-free marker interface in `LitXus.Domain.Common` — Domain must never reference MediatR). A `DomainEventDispatchInterceptor` (mirrors the existing `AuditSaveChangesInterceptor`) collects and dispatches them via MediatR's `IPublisher` **after** `SaveChangesAsync` commits, not before — a failed transaction must never fire an event. Each event is wrapped in a generic `DomainEventNotification<TDomainEvent> : INotification` before publishing.
 
 ```
-Sales.InvoicePosted (domain event)
+Invoice.Issue() domain method
+      │  AddDomainEvent(new InvoiceIssuedEvent(Id))
+      ▼
+SaveChangesAsync commits
       │
       ▼
-MediatR INotification: InvoicePostedEvent
+DomainEventDispatchInterceptor.SavedChangesAsync
+      │  wraps in DomainEventNotification<InvoiceIssuedEvent>, publishes via IPublisher
+      ▼
+Accounting.EventHandlers.PostInvoiceToGLHandler
+  (always registered via MediatR's assembly scan — checks
+   IFeatureFlagService.IsEnabled(Module.Accounting) itself and no-ops if disabled)
       │
       ▼
-Accounting.Handlers.PostInvoiceToGLHandler
-  (only registered/active if Accounting + Sales flags are both on)
-      │
-      ▼
-Creates GLEntry (Dr Accounts Receivable / Cr Sales Revenue, Cr SST Payable)
+Creates GLEntry (Dr Accounts Receivable / Cr Sales Revenue, Cr SST Payable), already Posted
 ```
 
-Same pattern for `StockMovementRecordedEvent` → COGS GL posting. If a customer only licenses Retail Pro (no Accounting), the notification handler is simply never registered in DI — Sales/Inventory function identically with or without GL posting wired up.
+Same pattern for `PaymentVerifiedEvent` → `PostPaymentToGLHandler` (Dr Cash/Bank / Cr Accounts Receivable). A later `StockMovementRecordedEvent` → COGS GL posting (Phase 3) is expected to follow the identical shape.
+
+**Correction from the original design:** the handler is **always** registered in DI (MediatR's `RegisterServicesFromAssembly` auto-discovers every `INotificationHandler<T>` regardless of licensing) — it is not conditionally registered based on which modules are enabled. Instead, each handler's first line checks `IFeatureFlagService.IsEnabled(Module.Accounting)` and returns immediately if it's off. This was chosen over conditional DI registration because MediatR's auto-discovery makes "don't register this handler" awkward to express safely, and a licensed-check no-op is behaviorally identical: if a customer only licenses Retail Pro (no Accounting), `Invoice.Issue()`/`Payment.Verify()` still succeed identically, simply with no `GLEntry` created.
 
 ## 1.5 Data Flow — Example (Sales Invoice → GL)
 
 ```
-1. User submits invoice via React form (React Hook Form + Axios POST /api/sales/invoices)
-2. InvoicesController → MediatR Send(CreateInvoiceCommand)
-3. CreateInvoiceCommandHandler:
-     - FluentValidation validator runs first (pipeline behavior)
-     - Loads Customer, Product entities via repositories
-     - Invoice.Create(...) domain factory enforces business rules
-       (sequential invoice number, no negative qty, SST calc)
-     - SaveChanges → AuditInterceptor captures before/after → AuditLog row written
-     - Publishes InvoicePostedEvent
-4. (Enterprise Pro only) PostInvoiceToGLHandler creates balanced GLEntry
-5. Response mapped to a DTO via the entity's `ToDto()` extension method → 201 Created returned
-6. Frontend: SweetAlert2 success toast (template convention), invoice list re-fetched via a Redux-Saga-driven action creator (`fetchInvoices()` dispatched, saga calls the API, reducer updates `state.Sales.invoices`)
+1. User submits invoice via React form (React Hook Form + Axios POST /api/v1/sales/invoices)
+2. InvoicesController → MediatR Send(CreateInvoiceCommand) → creates a Draft invoice
+   (Phase 2 lines are free-text Description/Quantity/UnitPrice — no Product entity exists
+   until Phase 3, so there's no Product lookup at this step yet)
+3. A second request, POST /api/v1/sales/invoices/{id}/issue → IssueInvoiceCommandHandler:
+     - Loads the Invoice, calls Invoice.Issue(invoiceNumber) — assigns the next sequential
+       number via INumberSequenceGenerator, flips Draft -> Issued, raises InvoiceIssuedEvent
+     - SaveChangesAsync → AuditSaveChangesInterceptor captures before/after (AuditLog row)
+       AND DomainEventDispatchInterceptor dispatches InvoiceIssuedEvent after commit
+4. (Only if Accounting is licensed) PostInvoiceToGLHandler creates a balanced, already-Posted
+   GLEntry (Dr Accounts Receivable / Cr Sales Revenue, Cr SST Payable if taxed)
+5. Response mapped to a DTO via the entity's `ToDto()` extension method → 200 OK returned
+6. Frontend: invoice list re-fetched (plain fetch-and-setState in the Sales pages, not a
+   Redux-Saga action — the Sales pages built in Phase 2 follow the same local-state pattern
+   as Phase 1's Accounting pages, not the template's original Redux-Saga scaffolding)
 ```
 
 ## 1.6 How Three Products Share One Codebase

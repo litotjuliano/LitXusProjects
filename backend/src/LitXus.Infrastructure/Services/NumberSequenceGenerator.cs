@@ -13,7 +13,16 @@ namespace LitXus.Infrastructure.Services;
 /// </summary>
 public class NumberSequenceGenerator(AppDbContext db) : INumberSequenceGenerator
 {
-    public async Task<string> NextGLEntryNumberAsync(CancellationToken cancellationToken = default)
+    public Task<string> NextGLEntryNumberAsync(CancellationToken cancellationToken = default) =>
+        NextAsync("GLEntryNumberSeq", "JE", cancellationToken);
+
+    public Task<string> NextInvoiceNumberAsync(CancellationToken cancellationToken = default) =>
+        NextAsync("InvoiceNumberSeq", "INV", cancellationToken);
+
+    public Task<string> NextCreditNoteNumberAsync(CancellationToken cancellationToken = default) =>
+        NextAsync("CreditNoteNumberSeq", "CN", cancellationToken);
+
+    private async Task<string> NextAsync(string sequenceName, string prefix, CancellationToken cancellationToken)
     {
         var connection = (SqlConnection)db.Database.GetDbConnection();
         var wasClosed = connection.State != System.Data.ConnectionState.Open;
@@ -25,10 +34,10 @@ public class NumberSequenceGenerator(AppDbContext db) : INumberSequenceGenerator
         try
         {
             await using var command = connection.CreateCommand();
-            command.CommandText = "SELECT NEXT VALUE FOR dbo.GLEntryNumberSeq";
+            command.CommandText = $"SELECT NEXT VALUE FOR dbo.{sequenceName}";
 
             var next = (long)(await command.ExecuteScalarAsync(cancellationToken))!;
-            return $"JE-{DateTime.UtcNow.Year}-{next:D6}";
+            return $"{prefix}-{DateTime.UtcNow.Year}-{next:D6}";
         }
         finally
         {

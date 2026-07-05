@@ -9,4 +9,6 @@ namespace LitXus.Application.Common.Interfaces;
 public interface INumberSequenceGenerator
 {
     Task<string> NextGLEntryNumberAsync(CancellationToken cancellationToken = default);
+    Task<string> NextInvoiceNumberAsync(CancellationToken cancellationToken = default);
+    Task<string> NextCreditNoteNumberAsync(CancellationToken cancellationToken = default);
 }

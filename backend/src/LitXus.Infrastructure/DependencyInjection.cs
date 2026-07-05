@@ -18,11 +18,14 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<AuditSaveChangesInterceptor>();
+        services.AddScoped<DomainEventDispatchInterceptor>();
 
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
             options.UseSqlServer(configuration.GetConnectionString("Default"));
-            options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
+            options.AddInterceptors(
+                sp.GetRequiredService<AuditSaveChangesInterceptor>(),
+                sp.GetRequiredService<DomainEventDispatchInterceptor>());
         });
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
@@ -65,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<ISeeder, LicenseSeeder>();
         services.AddScoped<ISeeder, UserSeeder>();
         services.AddScoped<ISeeder, AccountingDemoDataSeeder>();
+        services.AddScoped<ISeeder, SalesDemoDataSeeder>();
         services.AddHostedService<SeedDatabaseHostedService>();
 
         return services;

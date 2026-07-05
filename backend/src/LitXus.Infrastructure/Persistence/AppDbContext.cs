@@ -1,6 +1,7 @@
 using LitXus.Application.Common.Interfaces;
 using LitXus.Domain.Modules.Accounting.Entities;
 using LitXus.Domain.Modules.Identity.Entities;
+using LitXus.Domain.Modules.Sales.Entities;
 using LitXus.Domain.Modules.Shared.Entities;
 using LitXus.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -31,6 +32,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
 
+    // Sales
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
+    public DbSet<SalesSettings> SalesSettings => Set<SalesSettings>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -39,8 +48,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         // Soft-delete query filters — docs/02_Database_Schema.md intro ("nothing is hard-deleted")
         builder.Entity<Account>().HasQueryFilter(a => !a.IsDeleted);
         builder.Entity<GLEntry>().HasQueryFilter(e => !e.IsDeleted);
+        builder.Entity<Invoice>().HasQueryFilter(i => !i.IsDeleted);
+        builder.Entity<CreditNote>().HasQueryFilter(c => !c.IsDeleted);
 
-        // Backs NumberSequenceGenerator — gap-free GL entry numbering, never MAX(number)+1.
+        // Backs NumberSequenceGenerator — gap-free numbering, never MAX(number)+1.
         builder.HasSequence<long>("GLEntryNumberSeq", schema: "dbo").StartsAt(1).IncrementsBy(1);
+        builder.HasSequence<long>("InvoiceNumberSeq", schema: "dbo").StartsAt(1).IncrementsBy(1);
+        builder.HasSequence<long>("CreditNoteNumberSeq", schema: "dbo").StartsAt(1).IncrementsBy(1);
     }
 }

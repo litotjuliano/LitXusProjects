@@ -50,22 +50,22 @@ Each phase follows the same workflow: **OpenSpec → Implement → Test → Docu
 
 **Backend features:** Customer CRUD, Invoice CRUD + lifecycle (Draft→Issued→Paid/Void), sequential invoice numbering (gap-free, same pattern as GL entries), payment recording + admin verification, credit notes, sales reports (summary, AR aging).
 
-**Frontend components:** Customers list/form, Invoice list + detail + line editor, "Issue Invoice" action with confirmation, Payment modal, Payment verification queue (admin), Sales reports dashboard with Recharts.
+**Frontend components:** Customers list/form, Invoice list + detail + line editor, "Issue Invoice" action with confirmation, Payment modal, Payment verification queue (admin), Sales reports — built as plain tables matching the existing Accounting reports' convention rather than Recharts (not currently a frontend dependency; introducing one for 2 report pages wasn't judged worth it).
 
 **Database:** Sales tables, §2.3.
 
-**API:** 15+ endpoints, §3.6.
+**API:** 15+ endpoints, §3.6 — implemented, plus 3 additions beyond the original list (`GET /sales/credit-notes` list, `POST /sales/payments/{id}/reject`, and the entire `SalesSettingsController`); `GET /sales/customers/{id}` and `GET /sales/invoices/{id}/pdf` from the original §3.6 list were not built (no single-customer detail view or invoice PDF export exist yet — real gaps, not silently dropped).
 
-**Sample data:** 30–50 Malaysian customers, 20–30 invoices across statuses, 15–20 payments, 2–3 credit notes.
+**Sample data:** 41 Malaysian customers, 24 invoices across statuses (2 Draft, 22 Issued via real domain calls), 18 payments (15 Verified, 1 Rejected, 2 Pending), 2 credit notes — within the planned ranges.
 
 **Testing checklist:**
-- [ ] Unit: invoice numbering gap-free under concurrent creation, SST calc per line, status transition guards (can't edit Issued invoice)
-- [ ] Integration: invoice → payment → status update flow end-to-end
-- [ ] Manual: full happy path (create customer → create invoice → issue → record payment → admin verifies → status becomes Paid)
-- [ ] Edge cases: overpayment rejected, voiding invoice with verified payment blocked, credit note exceeding invoice total rejected
-- [ ] Security: Sales User role cannot verify payments (Admin-only permission)
+- [x] Unit: SST calc per line (inherited from Phase 1's `TaxCode.Calculate`), status transition guards (can't edit Issued invoice) — `InvoiceTests.cs`, `PaymentTests.cs`, `CreditNoteTests.cs`. Invoice numbering gap-free under *concurrent* creation is not separately load-tested (relies on the same SQL Server `SEQUENCE` mechanism as GL entry numbering, not re-verified under concurrency for this phase).
+- [x] Integration: invoice → payment → status update flow end-to-end, including the domain-event GL posting — `InvoiceToGLPostingTests.cs`
+- [x] Manual: full happy path (create customer → create invoice → issue → record payment → admin verifies → status becomes Paid) — verified live via Playwright + direct API calls
+- [x] Edge cases: overpayment rejected, voiding invoice with verified payment blocked, credit note exceeding invoice total rejected — unit-tested
+- [x] Security: Sales User role cannot verify payments or issue/void invoices (Admin-only permission) — verified live, 403 confirmed on all three
 
-**Documentation:** Updated Swagger, user guide additions, Phase 2 completion report.
+**Documentation:** Updated Swagger (auto-generated from controllers), `docs/phase-2-sales/` doc set, OpenSpec `sales` capability, this Phase 2 completion report.
 
 **Estimated effort:** ~15 days.
 

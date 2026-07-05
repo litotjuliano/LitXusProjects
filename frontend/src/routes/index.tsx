@@ -26,6 +26,15 @@ const IncomeStatement = React.lazy(() => import("../pages/accounting/reports/Inc
 const BalanceSheet = React.lazy(() => import("../pages/accounting/reports/BalanceSheet"));
 const GeneralLedger = React.lazy(() => import("../pages/accounting/reports/GeneralLedger"));
 
+// sales (Phase 2)
+const Customers = React.lazy(() => import("../pages/sales/Customers"));
+const Invoices = React.lazy(() => import("../pages/sales/Invoices"));
+const Payments = React.lazy(() => import("../pages/sales/Payments"));
+const CreditNotes = React.lazy(() => import("../pages/sales/CreditNotes"));
+const SalesSummary = React.lazy(() => import("../pages/sales/reports/SalesSummary"));
+const ArAging = React.lazy(() => import("../pages/sales/reports/ArAging"));
+const SalesSettings = React.lazy(() => import("../pages/sales/SalesSettings"));
+
 // admin
 const AdminCompanyProfile = React.lazy(() => import("../pages/admin/CompanyProfile"));
 const AdminUsers = React.lazy(() => import("../pages/admin/Users"));
@@ -127,6 +136,58 @@ const accountingRoutes: RoutesProps = {
       path: "/accounting/reports/general-ledger",
       name: "General Ledger",
       element: <GeneralLedger />,
+      route: PrivateRoute,
+    },
+  ],
+};
+
+// Sales (Phase 2)
+const salesRoutes: RoutesProps = {
+  path: "/sales",
+  name: "Sales",
+  icon: "shopping-cart",
+  header: "Sales",
+  children: [
+    {
+      path: "/sales/customers",
+      name: "Customers",
+      element: <Customers />,
+      route: PrivateRoute,
+    },
+    {
+      path: "/sales/invoices",
+      name: "Invoices",
+      element: <Invoices />,
+      route: PrivateRoute,
+    },
+    {
+      path: "/sales/payments",
+      name: "Payments",
+      element: <Payments />,
+      route: PrivateRoute,
+    },
+    {
+      path: "/sales/credit-notes",
+      name: "Credit Notes",
+      element: <CreditNotes />,
+      route: PrivateRoute,
+    },
+    {
+      path: "/sales/reports/sales-summary",
+      name: "Sales Summary",
+      element: <SalesSummary />,
+      route: PrivateRoute,
+    },
+    {
+      path: "/sales/reports/aging",
+      name: "AR Aging",
+      element: <ArAging />,
+      route: PrivateRoute,
+    },
+    {
+      path: "/sales/settings",
+      name: "Sales Settings",
+      element: <SalesSettings />,
       route: PrivateRoute,
     },
   ],
@@ -253,6 +314,7 @@ const flattenRoutes = (routes: RoutesProps[]) => {
 const authProtectedRoutes = [
   dashboardRoutes,
   accountingRoutes,
+  salesRoutes,
   adminRoutes,
 ];
 const publicRoutes = [...authRoutes, ...otherPublicRoutes];
