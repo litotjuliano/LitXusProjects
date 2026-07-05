@@ -126,6 +126,7 @@ POST   /api/v1/sales/invoices                          Draft
 PUT    /api/v1/sales/invoices/{id}                      Draft only
 POST   /api/v1/sales/invoices/{id}/issue                Draft -> Issued (assigns sequential number)
 POST   /api/v1/sales/invoices/{id}/void                 reason required
+GET    /api/v1/sales/invoices/{id}/pdf                  downloadable PDF (letterhead, lines, totals)
 
 POST   /api/v1/sales/invoices/{id}/payments
 GET    /api/v1/sales/payments                          filter: status
@@ -145,9 +146,9 @@ GET    /api/v1/sales/reports/aging                     accounts receivable aging
 ```
 
 Not built from the original list: `GET /sales/customers/{id}` (no single-customer detail view exists —
-the list view + edit modal cover current usage) and `GET /sales/invoices/{id}/pdf` (no PDF export for
-invoices yet, unlike the 4 Accounting reports which do have PDF/Excel export). Both are real gaps for a
-future pass, not silently dropped.
+the list view + edit modal cover current usage). A real gap for a future pass, not silently dropped.
+Invoice PDF export (`GET /sales/invoices/{id}/pdf`) was originally listed as a gap here too — since built,
+see the endpoint above.
 
 ## 3.7 Inventory Module (Phase 3) — 12+ endpoints
 

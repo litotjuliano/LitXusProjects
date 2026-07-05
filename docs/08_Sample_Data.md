@@ -50,7 +50,7 @@ Seed data deliberately includes:
 - ✅ built: several invoices with a partial payment (tests PartiallyPaid status)
 - One voided GL entry with a reason (tests audit trail display)
 - One product below its reorder level (tests reorder alert) — Phase 3, not built yet
-- One customer at/over their credit limit — seeded data doesn't currently exercise this; credit-limit enforcement at invoice-creation time isn't built either (flagged gap, see `docs/phase-2-sales/Features.md`)
+- One customer at/over their credit limit — soft credit-limit warning on invoice creation is built (`docs/phase-2-sales/Business_Rules.md`), though the seeded demo data doesn't currently include a customer deliberately over their limit
 - One bank statement line with no matching GL entry (tests unreconciled-item report)
 
 ## 8.5 How Seeding Works (as actually built)

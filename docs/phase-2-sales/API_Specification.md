@@ -18,9 +18,13 @@ PATCH  /sales/customers/{id}/status     { isActive }                            
 GET    /sales/invoices                  ?status=&customerId=&dateFrom=&dateTo=   permission: Sales.Invoice.Read
 GET    /sales/invoices/{id}                                                       permission: Sales.Invoice.Read
 POST   /sales/invoices                  { customerId, invoiceDate, dueDate, notes?, lines: [{description, quantity, unitOfMeasure?, unitPrice, taxCodeId?}] }   permission: Sales.Invoice.Create
+                                         response meta: { creditLimitWarning: string | null } — never blocks
+                                         creation; non-null only if this invoice would push the customer's
+                                         outstanding balance past their CreditLimit (0 = no limit configured)
 PUT    /sales/invoices/{id}             (Draft only, same shape as POST minus customerId)   permission: Sales.Invoice.Update
 POST   /sales/invoices/{id}/issue                                                 permission: Sales.Invoice.Approve
 POST   /sales/invoices/{id}/void        { reason }                               permission: Sales.Invoice.Approve
+GET    /sales/invoices/{id}/pdf         downloads a PDF rendering of the invoice   permission: Sales.Invoice.Read
 POST   /sales/invoices/{id}/payments    { paymentDate, amount, method, referenceNumber?, bankAccountId? }   permission: Sales.Payment.Create
                                          (nested under invoices per the original spec — creates a Pending Payment)
 ```

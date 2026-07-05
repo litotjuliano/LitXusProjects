@@ -10,4 +10,4 @@ public record CreateInvoiceCommand(
     DateOnly InvoiceDate,
     DateOnly DueDate,
     string? Notes,
-    IReadOnlyList<InvoiceLineInput> Lines) : IRequest<InvoiceDto>;
+    IReadOnlyList<InvoiceLineInput> Lines) : IRequest<CreateInvoiceResultDto>;

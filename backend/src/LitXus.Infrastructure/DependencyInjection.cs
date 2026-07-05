@@ -52,6 +52,7 @@ public static class DependencyInjection
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         services.AddSingleton<IReportPdfExporter, QuestPdfReportExporter>();
         services.AddSingleton<IReportExcelExporter, ClosedXmlReportExporter>();
+        services.AddSingleton<IInvoicePdfExporter, QuestPdfInvoiceExporter>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<JwtTokenGenerator>();

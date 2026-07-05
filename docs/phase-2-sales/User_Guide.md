@@ -55,6 +55,10 @@ Back in the invoice list, filter by **Draft**, find your new invoice, and click 
 
 **Accounting impact:** issuing posts a `Posted` GL entry automatically — Dr Accounts Receivable RM 1,669.50 / Cr Sales Revenue RM 1,575.00 / Cr SST Payable RM 94.50. Check **Accounting → GL Entries** to see it (`Source: SalesAutoPost`).
 
+Open the invoice detail view any time and click **Download PDF** to get a printable copy with the company letterhead, line items, and totals.
+
+**If this invoice would push the customer over their credit limit:** creation still succeeds, but you'll see an alert describing the projected outstanding balance versus their configured limit — it's a warning for judgment, not a hard stop (a customer with `CreditLimit = 0` never triggers this).
+
 ---
 
 ## 3. Scenario: Record and verify a payment
@@ -99,7 +103,7 @@ Go to **Sales → Credit Notes → + New Credit Note**:
 
 Click **Create Credit Note**. It's assigned a number (`CN-2026-000003`) and applied immediately — the invoice's outstanding balance drops by RM 262.50. If you enter an amount greater than the invoice's current outstanding balance, the request is rejected outright with no partial effect.
 
-Credit notes do **not** currently post to the GL — this is a known, deliberate gap for this phase (see Business_Rules.md).
+**Accounting impact:** applying the credit note also posts a `Posted` GL entry automatically — Dr Sales Revenue RM 262.50 / Cr Accounts Receivable RM 262.50, reversing the original sale for the credited amount. (One simplification: this doesn't reverse SST Payable, since a credit note doesn't track a tax breakdown the way an invoice line does.)
 
 ---
 
@@ -121,6 +125,8 @@ Credit notes do **not** currently post to the GL — this is a known, deliberate
 - [ ] A customer created and visible in the list
 - [ ] An invoice created, issued, and a matching `SalesAutoPost` GL entry visible in GL Entries
 - [ ] A payment recorded (invoice unchanged), then verified (invoice status/outstanding updates, a second GL entry posts)
-- [ ] A credit note created against an invoice with outstanding balance, reducing it correctly
+- [ ] A credit note created against an invoice with outstanding balance, reducing it correctly and posting its own GL entry
 - [ ] Sales Summary and AR Aging reports both render with real numbers
 - [ ] A `SalesUser` account gets 403 attempting to Verify a payment or Issue/Void an invoice, but can still create customers/invoices/payments
+- [ ] Downloading an invoice's PDF produces a valid file with the correct totals
+- [ ] Creating an invoice that pushes a customer over their configured credit limit still succeeds, with a warning

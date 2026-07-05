@@ -11,6 +11,7 @@ import {
   issueInvoice,
   voidInvoice,
   recordPayment,
+  getInvoicePdf,
   listCustomers,
   type Customer,
   type Invoice,
@@ -20,6 +21,7 @@ import {
 import { listTaxCodes, type TaxCode } from "../../helpers/api/taxCodes";
 import { listBankAccounts, type BankAccount } from "../../helpers/api/bankReconciliation";
 import { formatCurrency } from "../../utils/currency";
+import { downloadBlob } from "../../utils/fileDownload";
 
 interface InvoiceLineFormValues {
   description: string;
@@ -182,7 +184,9 @@ const Invoices = () => {
       if (editingInvoice) {
         await updateInvoice(editingInvoice.id, payload);
       } else {
-        await createInvoice(payload);
+        const res = await createInvoice(payload);
+        const warning = res.data?.meta?.creditLimitWarning;
+        if (warning) window.alert(warning);
       }
       closeModal();
       fetchInvoices();
@@ -215,6 +219,11 @@ const Invoices = () => {
     } finally {
       setBusyId(null);
     }
+  };
+
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    const res = await getInvoicePdf(invoice.id);
+    downloadBlob(res.data, `invoice-${invoice.invoiceNumber ?? invoice.id}.pdf`);
   };
 
   const submitPayment = async (values: PaymentFormValues) => {
@@ -423,6 +432,9 @@ const Invoices = () => {
               <div className="text-right text-sm">
                 <div>Total: <span className="font-mono">{formatCurrency(viewingInvoice.totalAmount)}</span></div>
                 <div>Outstanding: <span className="font-mono">{formatCurrency(viewingInvoice.outstandingBalance)}</span></div>
+                <button type="button" onClick={() => handleDownloadPdf(viewingInvoice)} className="mt-1 text-xs font-medium text-primary hover:underline">
+                  Download PDF
+                </button>
               </div>
             </div>
 

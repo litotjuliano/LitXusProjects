@@ -1,5 +1,6 @@
 using LitXus.Api.Filters;
 using LitXus.Application.Common.Interfaces;
+using LitXus.Application.Modules.Company.Queries.GetCompanyProfile;
 using LitXus.Application.Modules.Sales.Commands.CreateInvoice;
 using LitXus.Application.Modules.Sales.Commands.IssueInvoice;
 using LitXus.Application.Modules.Sales.Commands.RecordPayment;
@@ -21,8 +22,9 @@ public record RecordPaymentRequest(DateOnly PaymentDate, decimal Amount, string 
 [Authorize]
 [Route("api/v1/sales/invoices")]
 [RequireModule(Module.Sales)]
-public class InvoicesController(IMediator mediator) : ControllerBase
+public class InvoicesController(IMediator mediator, IInvoicePdfExporter pdfExporter) : ControllerBase
 {
+    private const string PdfContentType = "application/pdf";
     [HttpGet]
     [RequirePermission("Sales.Invoice.Read")]
     public async Task<IActionResult> GetAll(
@@ -46,7 +48,8 @@ public class InvoicesController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateInvoiceCommand command)
     {
         var result = await mediator.Send(command);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, new { data = result, meta = (object?)null });
+        return CreatedAtAction(nameof(GetById), new { id = result.Invoice.Id },
+            new { data = result.Invoice, meta = new { creditLimitWarning = result.CreditLimitWarning } });
     }
 
     [HttpPut("{id:guid}")]
@@ -71,6 +74,15 @@ public class InvoicesController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new VoidInvoiceCommand(id, request.Reason));
         return Ok(new { data = result, meta = (object?)null });
+    }
+
+    [HttpGet("{id:guid}/pdf")]
+    [RequirePermission("Sales.Invoice.Read")]
+    public async Task<IActionResult> Pdf(Guid id)
+    {
+        var invoice = await mediator.Send(new GetInvoiceByIdQuery(id));
+        var company = await mediator.Send(new GetCompanyProfileQuery());
+        return File(pdfExporter.ExportInvoice(invoice, company), PdfContentType, $"invoice-{invoice.InvoiceNumber ?? id.ToString()}.pdf");
     }
 
     [HttpPost("{id:guid}/payments")]

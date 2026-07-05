@@ -10,8 +10,8 @@ namespace LitXus.Application.Modules.Sales.Commands.CreateCreditNote;
 
 /// <summary>
 /// Reduces the invoice's outstanding balance exactly like a payment would (reusing
-/// Invoice.ApplyPayment) — no GL entry is auto-posted for a credit note in this pass (out of
-/// scope; not exercised by the Phase 2 testing checklist, unlike invoice issue/payment verify).
+/// Invoice.ApplyPayment). CreditNote.Create() raises CreditNoteAppliedEvent, which
+/// PostCreditNoteToGLHandler reacts to the same way invoice issuance/payment verification do.
 /// </summary>
 public class CreateCreditNoteCommandHandler(IAppDbContext db, INumberSequenceGenerator numberSequenceGenerator)
     : IRequestHandler<CreateCreditNoteCommand, CreditNoteDto>

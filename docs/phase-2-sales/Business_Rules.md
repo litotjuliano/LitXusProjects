@@ -69,3 +69,13 @@
 **Statement:** The `SalesUser` role holds Create/Read/Update on Customer/Invoice/Payment/CreditNote but not `Sales.Invoice.Approve` (which gates both Issue and Void) or `Sales.Payment.Verify`.
 **Enforced at:** `[RequirePermission]` action filters on `InvoicesController`'s Issue/Void actions and `PaymentsController`'s Verify/Reject actions.
 **Violation behavior:** 403, generic "You do not have permission to perform this action" — matches Phase 1's deliberate non-disclosure of which specific permission is missing.
+
+## Rule: Applying a credit note posts a reversing GL entry
+**Statement:** `CreditNote.Create()` raises `CreditNoteAppliedEvent`, posting Dr Sales Revenue / Cr Accounts Receivable for the full credit `Amount`. Unlike invoice/payment posting, SST Payable is never adjusted — `CreditNote` has no per-line tax breakdown to reverse precisely.
+**Enforced at:** `PostCreditNoteToGLHandler` (same no-op-if-Accounting-unlicensed and Sales-Settings-required rules as invoice/payment posting apply here too).
+**Violation behavior:** `SalesSettingsNotConfiguredException` if Sales Settings aren't configured; otherwise none — this is a posting action, not a rejection path.
+
+## Rule: A credit-limit-exceeding invoice warns but is never blocked
+**Statement:** `POST /sales/invoices` always succeeds. If the customer's `CreditLimit > 0` and their outstanding balance across `Issued`/`PartiallyPaid` invoices plus the new invoice's `TotalAmount` exceeds it, the response's `meta.creditLimitWarning` carries a message; a `CreditLimit` of 0 or less means no limit is configured and never produces a warning.
+**Enforced at:** `CreateInvoiceCommandHandler.BuildCreditLimitWarningAsync`.
+**Violation behavior:** N/A — deliberately non-blocking (confirmed with the user: a SalesUser may have good reason to extend a trusted customer past their nominal limit).

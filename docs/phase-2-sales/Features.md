@@ -15,7 +15,9 @@ Goal: a fully standalone Sales module (Customers, Invoices, Payments, Credit Not
 - [x] Customers can be deactivated/reactivated (`IsActive`) — never deleted, matching Accounting's `Account` convention
 - [x] Inactive customers are excluded from the invoice customer picker by default
 
-**Out of scope:** Credit-limit enforcement at invoice-creation time (the field is stored but not yet checked against outstanding balance — flagged as a gap, not built this pass).
+- [x] Creating an invoice that would push the customer's outstanding balance (existing Issued/PartiallyPaid invoices + the new one) past their `CreditLimit` returns a soft warning (`meta.creditLimitWarning`) rather than blocking creation — a `CreditLimit` of 0 means no limit is configured
+
+**Out of scope:** none for this feature — the credit-limit check ships as a warning by design (confirmed with the user), not a hard block.
 
 ---
 
@@ -31,6 +33,7 @@ Goal: a fully standalone Sales module (Customers, Invoices, Payments, Credit Not
 - [x] `Overdue` is computed at query time from `DueDate` vs. today — never a stored transition, since no scheduled-job infrastructure exists in this codebase
 - [x] Voiding requires a reason and is rejected outright if a Verified payment already exists against the invoice
 - [x] `AmountPaid`/`OutstandingBalance`/`Status` (PartiallyPaid/Paid) update automatically as payments are verified
+- [x] An invoice can be downloaded as a PDF (`GET /sales/invoices/{id}/pdf`), matching the layout convention of the 4 Accounting report PDF exports; invoked from a "Download PDF" button on the invoice detail view
 
 **Out of scope:** A real `ProductId` line reference (Phase 3 Inventory territory — every Phase 2 line is free-text); a multi-level Carton/Box/Pack unit-of-measure conversion engine (also Phase 3 scope — `UnitOfMeasure` here is a single free-text convenience field, e.g. "pcs" or "kg").
 
@@ -60,8 +63,9 @@ Goal: a fully standalone Sales module (Customers, Invoices, Payments, Credit Not
 - [x] Create a credit note against one invoice (reason, amount) — assigned a sequential number (`CN-2026-000123`) and applied immediately (single-step, no separate Draft/Issue states)
 - [x] Amount exceeding the invoice's current outstanding balance is rejected
 - [x] Credit notes reduce the invoice's outstanding balance the same way a verified payment does
+- [x] Applying a credit note auto-posts a GL entry (Dr Sales Revenue / Cr Accounts Receivable, for the full credit amount — no SST Payable adjustment, since `CreditNote` has no per-line tax breakdown), the same domain-event pattern as invoice issuance/payment verification
 
-**Out of scope:** GL posting for credit notes (flagged as a real gap for a future change, not built this pass) — a credit note currently affects the invoice balance only, not the ledger.
+**Out of scope:** none for GL posting — see Feature 5's note on the SST simplification.
 
 ---
 
@@ -76,8 +80,9 @@ Goal: a fully standalone Sales module (Customers, Invoices, Payments, Credit Not
 - [x] Verifying a payment posts Dr Cash (or the payment's linked bank account) / Cr Accounts Receivable
 - [x] Both postings go through a real domain-event pipeline (`InvoiceIssuedEvent`/`PaymentVerifiedEvent`, dispatched via MediatR after the triggering transaction commits) — Sales has no compile-time dependency on Accounting
 - [x] In a deployment licensed for Sales only (no Accounting), invoices still issue and payments still verify normally; simply no GL entry is created
+- [x] Applying a credit note posts Dr Sales Revenue / Cr Accounts Receivable for the credit amount (see Feature 4) — the one simplification here is that this doesn't reverse SST Payable, since `CreditNote` doesn't track a tax breakdown the way `InvoiceLine` does
 
-**Out of scope:** GL posting for credit notes (see Feature 4).
+**Out of scope:** none remaining for this feature.
 
 ---
 

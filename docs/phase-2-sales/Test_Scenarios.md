@@ -1,6 +1,6 @@
 # Phase 2 — Test Scenarios
 
-Structured per [09_Testing_Strategy.md](../09_Testing_Strategy.md) §9.4 categories. Given/When/Then format; each maps to a unit or integration test (see `InvoiceTests.cs`, `PaymentTests.cs`, `CreditNoteTests.cs`, `InvoiceToGLPostingTests.cs`) or was verified live.
+Structured per [09_Testing_Strategy.md](../09_Testing_Strategy.md) §9.4 categories. Given/When/Then format; each maps to a unit or integration test (see `InvoiceTests.cs`, `PaymentTests.cs`, `CreditNoteTests.cs`, `InvoiceToGLPostingTests.cs`, `CreditNoteToGLPostingTests.cs`, `CreditLimitWarningTests.cs`, `ConcurrentInvoiceNumberingTests.cs`) or was verified live.
 
 ## Customers
 
@@ -27,6 +27,10 @@ Structured per [09_Testing_Strategy.md](../09_Testing_Strategy.md) §9.4 categor
 ### Edge cases
 - Given an invoice issued while Sales Settings are unconfigured, When the event handler runs, Then `SalesSettingsNotConfiguredException` is thrown but the invoice's own `Issue()` transition still succeeded (verified: the invoice is `Issued` even though no GL entry exists).
 - Given a deployment licensed for Sales only (no Accounting), When an invoice is issued, Then it succeeds and no GL entry is created.
+- Given a customer with `CreditLimit = 1000` and RM 800 already outstanding, When a new RM 300 invoice is created, Then it succeeds (201) with `meta.creditLimitWarning` describing the RM 1,100 projected outstanding — covered by `CreditLimitWarningTests` and verified live via direct API call.
+- Given a customer with `CreditLimit = 0` (no limit configured), When any invoice amount is created, Then `meta.creditLimitWarning` is always `null`.
+- Given 20 Draft invoices for the same customer, When all 20 are issued via concurrent `POST .../issue` requests, Then all 20 returned invoice numbers are distinct — covered by `ConcurrentInvoiceNumberingTests`.
+- Given an existing invoice, When `GET /sales/invoices/{id}/pdf` is called, Then the response is a valid PDF (`%PDF-` header) — verified live via a real browser download.
 
 ## Payments
 
@@ -43,7 +47,7 @@ Structured per [09_Testing_Strategy.md](../09_Testing_Strategy.md) §9.4 categor
 ## Credit Notes
 
 ### Happy path
-- Given an `Issued` invoice with RM 500 outstanding, When a RM 200 credit note is created, Then it's assigned `CN-YYYY-NNNNNN`, `Status = Applied`, and the invoice's outstanding balance drops to RM 300.
+- Given an `Issued` invoice with RM 500 outstanding, When a RM 200 credit note is created, Then it's assigned `CN-YYYY-NNNNNN`, `Status = Applied`, the invoice's outstanding balance drops to RM 300, and a `Posted` GL entry appears (Dr Sales Revenue RM 200 / Cr Accounts Receivable RM 200) — covered by `CreditNoteToGLPostingTests` and verified live.
 
 ### Error cases
 - Given an invoice with RM 500 outstanding, When a RM 600 credit note is attempted, Then rejected with `CreditNoteExceedsInvoiceBalanceException`.

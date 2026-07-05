@@ -130,6 +130,10 @@ function recordPayment(invoiceId: string, payload: { paymentDate: string; amount
   return api.create(`/sales/invoices/${invoiceId}/payments`, payload);
 }
 
+function getInvoicePdf(id: string) {
+  return api.getFile(`/sales/invoices/${id}/pdf`, null);
+}
+
 // Payments
 function listPayments(status?: string) {
   return api.get("/sales/payments", status ? { status } : null);
@@ -172,7 +176,7 @@ function configureSalesSettings(payload: { receivableAccountId: string; revenueA
 
 export {
   listCustomers, createCustomer, updateCustomer, setCustomerActive,
-  listInvoices, getInvoice, createInvoice, updateInvoice, issueInvoice, voidInvoice, recordPayment,
+  listInvoices, getInvoice, createInvoice, updateInvoice, issueInvoice, voidInvoice, recordPayment, getInvoicePdf,
   listPayments, verifyPayment, rejectPayment,
   listCreditNotes, createCreditNote,
   getSalesSummary, getArAging,

@@ -1,5 +1,6 @@
 using LitXus.Domain.Common;
 using LitXus.Domain.Modules.Sales.Enums;
+using LitXus.Domain.Modules.Sales.Events;
 
 namespace LitXus.Domain.Modules.Sales.Entities;
 
@@ -21,7 +22,7 @@ public class CreditNote : BaseEntity, IAuditable
 
     public static CreditNote Create(string creditNoteNumber, Guid invoiceId, string reason, decimal amount)
     {
-        return new CreditNote
+        var creditNote = new CreditNote
         {
             CreditNoteNumber = creditNoteNumber,
             InvoiceId = invoiceId,
@@ -29,5 +30,7 @@ public class CreditNote : BaseEntity, IAuditable
             Amount = amount,
             Status = CreditNoteStatus.Applied,
         };
+        creditNote.AddDomainEvent(new CreditNoteAppliedEvent(creditNote.Id));
+        return creditNote;
     }
 }

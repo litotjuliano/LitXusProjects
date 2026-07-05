@@ -54,15 +54,16 @@ Each phase follows the same workflow: **OpenSpec → Implement → Test → Docu
 
 **Database:** Sales tables, §2.3.
 
-**API:** 15+ endpoints, §3.6 — implemented, plus 3 additions beyond the original list (`GET /sales/credit-notes` list, `POST /sales/payments/{id}/reject`, and the entire `SalesSettingsController`); `GET /sales/customers/{id}` and `GET /sales/invoices/{id}/pdf` from the original §3.6 list were not built (no single-customer detail view or invoice PDF export exist yet — real gaps, not silently dropped).
+**API:** 15+ endpoints, §3.6 — implemented, plus 4 additions beyond the original list (`GET /sales/credit-notes` list, `POST /sales/payments/{id}/reject`, the entire `SalesSettingsController`, and `GET /sales/invoices/{id}/pdf`); `GET /sales/customers/{id}` from the original §3.6 list was not built (no single-customer detail view exists — a real gap, not silently dropped).
 
 **Sample data:** 41 Malaysian customers, 24 invoices across statuses (2 Draft, 22 Issued via real domain calls), 18 payments (15 Verified, 1 Rejected, 2 Pending), 2 credit notes — within the planned ranges.
 
 **Testing checklist:**
-- [x] Unit: SST calc per line (inherited from Phase 1's `TaxCode.Calculate`), status transition guards (can't edit Issued invoice) — `InvoiceTests.cs`, `PaymentTests.cs`, `CreditNoteTests.cs`. Invoice numbering gap-free under *concurrent* creation is not separately load-tested (relies on the same SQL Server `SEQUENCE` mechanism as GL entry numbering, not re-verified under concurrency for this phase).
-- [x] Integration: invoice → payment → status update flow end-to-end, including the domain-event GL posting — `InvoiceToGLPostingTests.cs`
+- [x] Unit: SST calc per line (inherited from Phase 1's `TaxCode.Calculate`), status transition guards (can't edit Issued invoice) — `InvoiceTests.cs`, `PaymentTests.cs`, `CreditNoteTests.cs`.
+- [x] Integration: invoice → payment → status update flow end-to-end, including the domain-event GL posting — `InvoiceToGLPostingTests.cs`, `CreditNoteToGLPostingTests.cs`
+- [x] Integration: invoice numbering stays unique under 20 concurrent `Issue` calls — `ConcurrentInvoiceNumberingTests.cs`
 - [x] Manual: full happy path (create customer → create invoice → issue → record payment → admin verifies → status becomes Paid) — verified live via Playwright + direct API calls
-- [x] Edge cases: overpayment rejected, voiding invoice with verified payment blocked, credit note exceeding invoice total rejected — unit-tested
+- [x] Edge cases: overpayment rejected, voiding invoice with verified payment blocked, credit note exceeding invoice total rejected — unit-tested; credit-limit-exceeding invoice warns without blocking — `CreditLimitWarningTests.cs` and verified live
 - [x] Security: Sales User role cannot verify payments or issue/void invoices (Admin-only permission) — verified live, 403 confirmed on all three
 
 **Documentation:** Updated Swagger (auto-generated from controllers), `docs/phase-2-sales/` doc set, OpenSpec `sales` capability, this Phase 2 completion report.

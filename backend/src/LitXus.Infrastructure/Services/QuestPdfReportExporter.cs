@@ -150,7 +150,7 @@ public class QuestPdfReportExporter : IReportPdfExporter
         });
     }
 
-    private static byte[] BuildDocument(string title, string subtitle, CompanyDto? company, Action<ColumnDescriptor> content) =>
+    internal static byte[] BuildDocument(string title, string subtitle, CompanyDto? company, Action<ColumnDescriptor> content) =>
         Document.Create(container =>
         {
             container.Page(page =>
@@ -182,7 +182,7 @@ public class QuestPdfReportExporter : IReportPdfExporter
             });
         }).GeneratePdf();
 
-    private static void HeaderRow(TableDescriptor table, params string[] headers)
+    internal static void HeaderRow(TableDescriptor table, params string[] headers)
     {
         foreach (var h in headers)
         {
@@ -190,13 +190,13 @@ public class QuestPdfReportExporter : IReportPdfExporter
         }
     }
 
-    private static void Cell(TableDescriptor table, string text, bool bold = false)
+    internal static void Cell(TableDescriptor table, string text, bool bold = false)
     {
         var t = table.Cell().PaddingVertical(2).Text(text);
         if (bold) t.Bold();
     }
 
-    private static void CellRight(TableDescriptor table, string text, bool bold = false)
+    internal static void CellRight(TableDescriptor table, string text, bool bold = false)
     {
         var t = table.Cell().PaddingVertical(2).AlignRight().Text(text);
         if (bold) t.Bold();
